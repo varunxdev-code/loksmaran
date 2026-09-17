@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a1512"/>
+      <stop offset="1" stop-color="#110e0c"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#g)"/>
+  <circle cx="120" cy="180" r="160" fill="#c45c3e" opacity="0.28"/>
+  <circle cx="620" cy="380" r="200" fill="#e8c36a" opacity="0.08"/>
+  <rect x="90" y="70" width="620" height="360" fill="none" stroke="#c45c3e" stroke-width="3" opacity="0.45"/>
+  <text x="120" y="240" fill="#f3ead8" font-family="Georgia, serif" font-size="42">Pattachitra</text>
+  <text x="120" y="288" fill="#c45c3e" font-family="monospace" font-size="16" letter-spacing="4">FAKE SEED · CRAFT · RAGHURAJPUR</text>
+  <text x="120" y="400" fill="#9a8f7f" font-family="monospace" font-size="12">m01 · not a real elder recording</text>
+</svg>

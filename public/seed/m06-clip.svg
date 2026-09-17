@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <rect width="800" height="500" fill="#110e0c"/>
+  <circle cx="400" cy="250" r="90" fill="#c45c3e" opacity="0.9">
+    <animate attributeName="r" values="70;120;70" dur="2.8s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.45;0.95;0.45" dur="2.8s" repeatCount="indefinite"/>
+  </circle>
+  <rect x="0" y="0" width="800" height="18" fill="#c45c3e" opacity="0.35">
+    <animate attributeName="y" values="0;482;0" dur="4s" repeatCount="indefinite"/>
+  </rect>
+  <text x="400" y="430" text-anchor="middle" fill="#f3ead8" font-family="Georgia, serif" font-size="28">Rath Yatra</text>
+  <text x="400" y="458" text-anchor="middle" fill="#e8c36a" font-family="monospace" font-size="12">DEMO CLIP · GENERATED</text>
+</svg>

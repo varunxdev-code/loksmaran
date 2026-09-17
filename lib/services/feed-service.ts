@@ -103,7 +103,7 @@ async function assemble(opts: FeedQuery): Promise<FeedItem[]> {
     }),
     geo
       ? searchOsm({
-          category: category === "all" ? "heritage" : category,
+          category,
           state: opts.state,
           place: opts.place || opts.q,
           lat: opts.lat,

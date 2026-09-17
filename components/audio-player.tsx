@@ -51,7 +51,7 @@ export function AudioPlayer({ src, label = "Voice note" }: { src: string; label?
           <div className="h-full rounded-full bg-ink" style={{ width: `${pct}%` }} />
         </div>
       </div>
-      <span className="text-[11px] text-mute">{fmt(t)} / {fmt(d)}</span>
+      <span className="shrink-0 text-[11px] text-mute">{fmt(t)} / {fmt(d)}</span>
     </div>
   );
 }

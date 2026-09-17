@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Go } from "@/components/go-link";
-import { COMMUNITIES, REGIONS, STATES } from "@/lib/taxonomy";
+import { REGIONS } from "@/lib/taxonomy";
+import { INDIA_STATES } from "@/lib/india";
 import { useLok } from "@/lib/store";
-import type { Region } from "@/lib/types";
+import type { Community, Region } from "@/lib/types";
 
 const KINDS = ["All", "Village", "Town", "City"] as const;
 const SORTS = [
@@ -15,6 +16,8 @@ const SORTS = [
 
 export default function CommunityIndex() {
   const posts = useLok((s) => s.posts);
+  const [places, setPlaces] = useState<Community[]>([]);
+  const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [kind, setKind] = useState<(typeof KINDS)[number]>("All");
   const [region, setRegion] = useState<Region | "All">("All");
@@ -22,9 +25,24 @@ export default function CommunityIndex() {
   const [voice, setVoice] = useState(false);
   const [sort, setSort] = useState<(typeof SORTS)[number]["id"]>("stories");
 
+  useEffect(() => {
+    const sp = new URLSearchParams();
+    if (state !== "All") sp.set("state", state);
+    if (kind !== "All") sp.set("kind", kind);
+    if (q.trim()) sp.set("q", q.trim());
+    const t = setTimeout(() => {
+      setLoading(true);
+      void fetch(`/api/places?${sp}`)
+        .then((r) => r.json())
+        .then((d) => setPlaces(d.items || []))
+        .finally(() => setLoading(false));
+    }, 250);
+    return () => clearTimeout(t);
+  }, [state, kind, q]);
+
   const list = useMemo(() => {
     const query = q.trim().toLowerCase();
-    const filtered = COMMUNITIES.filter((c) => {
+    const filtered = places.filter((c) => {
       if (kind !== "All" && c.kind !== kind) return false;
       if (region !== "All" && c.region !== region) return false;
       if (state !== "All" && c.state !== state) return false;
@@ -42,11 +60,11 @@ export default function CommunityIndex() {
       return a.c.name.localeCompare(b.c.name);
     });
     return scored;
-  }, [q, kind, region, state, voice, sort, posts]);
+  }, [q, kind, region, state, voice, sort, posts, places]);
 
   return (
     <div>
-      <h1 className="font-display text-4xl font-light tracking-tight">Real villages</h1>
+      <h1 className="font-display text-3xl font-light tracking-tight sm:text-4xl">Real villages</h1>
       <p className="mt-2 max-w-xl text-mute">Filter by region, state, and whether the place has a voice note. Open a village like a subreddit.</p>
 
       <input className="field mt-6 max-w-2xl rounded-full" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search Raghurajpur, Hodka, Khonoma…" />
@@ -65,8 +83,8 @@ export default function CommunityIndex() {
           State
           <select className="field mt-1" value={state} onChange={(e) => setState(e.target.value)}>
             <option value="All">All states</option>
-            {STATES.map((s) => (
-              <option key={s} value={s}>{s}</option>
+            {INDIA_STATES.map((s) => (
+              <option key={s.qid} value={s.name}>{s.name}</option>
             ))}
           </select>
         </label>
@@ -78,36 +96,40 @@ export default function CommunityIndex() {
             ))}
           </select>
         </label>
-        <label className="flex items-center gap-2 pt-6 text-sm">
+        <label className="flex items-center gap-2 text-sm sm:pt-6">
           <input type="checkbox" checked={voice} onChange={(e) => setVoice(e.target.checked)} />
           Has a voice note
         </label>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="chip-row mt-4">
         {KINDS.map((k) => (
           <button key={k} type="button" onClick={() => setKind(k)} className={`chip ${kind === k ? "chip-on" : ""}`}>{k}</button>
         ))}
       </div>
 
-      <p className="mt-5 text-sm text-mute">{list.length} {list.length === 1 ? "village" : "villages"}</p>
+      <p className="mt-5 text-sm text-mute">{loading ? "Loading places…" : `${list.length} ${list.length === 1 ? "village" : "villages"}`}</p>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         {list.map(({ c, stories }) => (
           <Go key={c.slug} href={`/community/${c.slug}`} className="group relative min-h-[240px] overflow-hidden rounded-[22px]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={c.image} alt="" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+            {c.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={c.image} alt="" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+            ) : (
+              <div className="absolute inset-0 bg-[#1c1915]" />
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
             <div className="relative flex h-full min-h-[240px] flex-col justify-end p-5 text-[#f6f1e8]">
               <p className="text-[11px] uppercase tracking-[0.16em] text-white/70">{c.region} · {c.state}</p>
               <h2 className="mt-1 font-display text-3xl font-light">{c.name}</h2>
-              <p className="mt-2 text-sm text-white/80">{c.blurb}</p>
+              <p className="mt-2 line-clamp-3 text-sm text-white/80">{c.blurb}</p>
               <p className="mt-3 text-xs text-white/60">{stories} {stories === 1 ? "story" : "stories"} · {c.people} people</p>
             </div>
           </Go>
         ))}
       </div>
-      {list.length === 0 ? <p className="mt-8 text-mute">No village matched those filters.</p> : null}
+      {!loading && list.length === 0 ? <p className="mt-8 text-mute">No village matched those filters.</p> : null}
     </div>
   );
 }

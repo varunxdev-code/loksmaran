@@ -28,9 +28,9 @@ export default function PricingPage() {
   ];
 
   return (
-    <main className="mx-auto max-w-6xl px-2 py-16 md:px-4">
+    <main className="mx-auto max-w-6xl px-1 py-10 sm:px-2 sm:py-16 md:px-4">
       <p className="kicker">Pricing</p>
-      <h1 className="mt-4 font-display text-5xl font-light tracking-tight text-[#f6f1e8] md:text-6xl">Paid where it should be.</h1>
+      <h1 className="mt-4 font-display text-4xl font-light tracking-tight text-[#f6f1e8] sm:text-5xl md:text-6xl">Paid where it should be.</h1>
       <p className="mt-4 max-w-xl text-white/55">
         Recording is free. Visitors and institutions pay. Revenue is meant for holders — not ads on a feed.
       </p>

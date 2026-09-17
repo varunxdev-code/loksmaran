@@ -141,7 +141,7 @@ export default function CreatePage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="font-display text-4xl font-light tracking-tight">Share a village story</h1>
+      <h1 className="font-display text-3xl font-light tracking-tight sm:text-4xl">Share a village story</h1>
       <p className="mt-2 text-mute">Record your voice. Pin it to a real village. It lands on the live feed.</p>
 
       <div className="mt-8 space-y-6">
@@ -202,7 +202,7 @@ export default function CreatePage() {
 
         {error ? <p className="text-sm text-blood">{error}</p> : null}
 
-        <button type="button" className="btn btn-ink min-w-[220px]" onClick={() => void publish()} disabled={busy === "pub"}>
+        <button type="button" className="btn btn-ink w-full sm:w-auto sm:min-w-[220px]" onClick={() => void publish()} disabled={busy === "pub"}>
           {busy === "pub" ? "Publishing…" : "Publish to the live feed"}
         </button>
       </div>

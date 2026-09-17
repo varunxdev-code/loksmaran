@@ -26,13 +26,13 @@ export default function ProfilePage() {
           {me.initials}
         </div>
         <div>
-          <h1 className="font-display text-4xl font-light">{session?.name ?? me.name}</h1>
+          <h1 className="font-display text-3xl font-light sm:text-4xl">{session?.name ?? me.name}</h1>
           <p className="mt-1 text-mute">{session?.email ?? me.location}</p>
           <p className="mt-3 max-w-md text-sm">{me.bio}</p>
         </div>
       </div>
 
-      <div className="mt-8 grid grid-cols-3 gap-3">
+          <div className="mt-8 grid grid-cols-3 gap-2 sm:gap-3">
         {[
           ["Stories", mine.length],
           ["Comments", comments.length],
@@ -45,7 +45,7 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-2">
+      <div className="chip-row mt-8">
         {TABS.map((t) => (
           <button key={t} type="button" onClick={() => setTab(t)} className={`chip ${tab === t ? "chip-on" : ""}`}>{t}</button>
         ))}

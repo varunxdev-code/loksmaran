@@ -22,7 +22,7 @@ export function Logo({
     <span className="inline-flex items-center gap-3">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/brand/mark.png" alt="" className={`${box} object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.35)]`} />
-      <span className={`${word} font-semibold tracking-[-0.03em] ${light ? "text-[#f6f1e8]" : "text-ink"}`}>
+      <span className={`${word} hidden font-semibold tracking-[-0.03em] min-[400px]:inline ${light ? "text-[#f6f1e8]" : "text-ink"}`}>
         Loksmaran
       </span>
     </span>

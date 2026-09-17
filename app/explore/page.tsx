@@ -1,47 +1,71 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PostCard } from "@/components/post-card";
-import { TRENDING } from "@/lib/seed-feed";
-import { CATEGORIES } from "@/lib/taxonomy";
+import { FeedSkeleton } from "@/components/feed-skeleton";
+import { FEED_FILTERS, type FeedCategory } from "@/lib/content";
 import { useLok } from "@/lib/store";
+import { useLiveFeed } from "@/lib/use-live-feed";
 import type { CategoryId } from "@/lib/types";
+
+const OLD: Record<CategoryId, FeedCategory> = {
+  lokkatha: "stories",
+  tyohar: "festivals",
+  khanpan: "food",
+  hastashilp: "crafts",
+  lokkala: "music",
+  parampara: "traditions",
+  sthaan: "places",
+  kahani: "stories",
+};
 
 function ExploreInner() {
   const params = useSearchParams();
-  const posts = useLok((s) => s.posts);
+  const localPosts = useLok((s) => s.posts.filter((p) => p.id.startsWith("p-")));
+  const upsertPost = useLok((s) => s.upsertPost);
   const [q, setQ] = useState(params.get("q") || "");
-  const [cat, setCat] = useState<CategoryId | "all">((params.get("cat") as CategoryId) || "all");
+  const [debounced, setDebounced] = useState(q);
+  const initialCat = params.get("cat") as CategoryId | null;
+  const [cat, setCat] = useState<FeedCategory>(initialCat ? OLD[initialCat] || "all" : ((params.get("filter") as FeedCategory) || "all"));
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(q), 450);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  const live = useLiveFeed({ category: cat, q: debounced.trim() || undefined });
+
+  useEffect(() => {
+    live.posts.forEach(upsertPost);
+  }, [live.posts, upsertPost]);
 
   const found = useMemo(() => {
     const query = q.trim().toLowerCase();
-    return posts.filter((p) => {
-      if (cat !== "all" && p.category !== cat) return false;
-      if (!query) return true;
+    const local = localPosts.filter((p) => {
+      if (!query) return cat === "all";
       return [p.title, p.body, p.author.name, p.author.location].join(" ").toLowerCase().includes(query);
     });
-  }, [posts, q, cat]);
+    const merged = [...local, ...live.posts];
+    return merged.filter((p, i, arr) => arr.findIndex((x) => x.id === p.id) === i);
+  }, [localPosts, live.posts, q, cat]);
 
   return (
     <div>
-      <h1 className="font-display text-4xl font-light tracking-tight">Search the archive</h1>
+      <h1 className="font-display text-3xl font-light tracking-tight sm:text-4xl">Search the archive</h1>
       <p className="mt-2 text-mute">Places, crafts, festivals, kitchens.</p>
       <input className="field mt-6 max-w-2xl rounded-full" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Try Holi, Varanasi, embroidery…" />
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button type="button" onClick={() => setCat("all")} className={`chip ${cat === "all" ? "chip-on" : ""}`}>All</button>
-        {CATEGORIES.map((c) => (
+      <div className="chip-row mt-4">
+        {FEED_FILTERS.filter((c) => c.id !== "nearby").map((c) => (
           <button key={c.id} type="button" onClick={() => setCat(c.id)} className={`chip ${cat === c.id ? "chip-on" : ""}`}>
             {c.label}
           </button>
         ))}
       </div>
-      <p className="mt-6 text-xs uppercase tracking-[0.16em] text-mute">Trending · {TRENDING.join(" · ")}</p>
       <div className="mt-6 space-y-3">
-        {found.map((post) => (
-          <PostCard key={post.id} post={post} />
-        ))}
-        {found.length === 0 ? <p className="card p-8 text-mute">Nothing matched. Try another place or category.</p> : null}
+        {live.loading ? <FeedSkeleton /> : found.map((post) => <PostCard key={post.id} post={post} />)}
+        {live.loadingMore ? <FeedSkeleton count={2} /> : null}
+        {!live.loading && found.length === 0 ? <p className="card p-8 text-mute">Nothing matched. Try another place or category.</p> : null}
       </div>
     </div>
   );

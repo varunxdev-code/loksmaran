@@ -42,7 +42,7 @@ export default function PostPage() {
         {categoryLabel(post.category)}
         {post.fromVoice ? " · from voice" : ""} · {timeAgo(post.createdAt)}
       </p>
-      <h1 className="mt-3 font-display text-4xl font-light leading-tight md:text-5xl">{post.title}</h1>
+      <h1 className="mt-3 font-display text-3xl font-light leading-tight sm:text-4xl md:text-5xl">{post.title}</h1>
       <p className="mt-3 text-sm text-mute">
         {post.author.name} · {place ? `${place.name}, ${place.state}` : post.author.location}
       </p>
@@ -50,7 +50,7 @@ export default function PostPage() {
       <p className="mt-8 text-lg leading-relaxed">{post.body}</p>
 
       <div className="mt-8 flex flex-wrap gap-2">
-        <button type="button" className="btn btn-ink h-11 min-h-11" onClick={() => toggleLike(post.id)}>
+        <button type="button" className="btn btn-ink h-11 min-h-11 w-full sm:w-auto" onClick={() => toggleLike(post.id)}>
           <Heart size={16} className={liked ? "fill-current" : ""} /> Like · {formatCount(post.likes)}
         </button>
         <button
@@ -70,9 +70,9 @@ export default function PostPage() {
       </div>
 
       <section className="mt-12">
-        <h2 className="font-display text-3xl font-light">Comments</h2>
+        <h2 className="font-display text-2xl font-light sm:text-3xl">Comments</h2>
         <form
-          className="mt-4 flex gap-2"
+          className="mt-4 flex flex-col gap-2 sm:flex-row"
           onSubmit={(e) => {
             e.preventDefault();
             if (!text.trim()) return;
@@ -81,7 +81,7 @@ export default function PostPage() {
           }}
         >
           <input className="field" value={text} onChange={(e) => setText(e.target.value)} placeholder="Add a comment…" />
-          <button className="btn btn-ink h-12 min-h-12 px-6" type="submit">Post</button>
+          <button className="btn btn-ink h-12 min-h-12 w-full px-6 sm:w-auto" type="submit">Post</button>
         </form>
         <ul className="mt-6 space-y-3">
           {post.comments.length === 0 ? <li className="text-sm text-mute">No comments yet.</li> : null}

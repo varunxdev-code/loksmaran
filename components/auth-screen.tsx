@@ -32,16 +32,16 @@ function AuthInner({ mode }: { mode: "login" | "signup" }) {
         <div className="relative flex h-full flex-col justify-between p-10">
           <a href="/"><Logo size="lg" light /></a>
           <div>
-            <p className="font-display text-6xl font-light leading-[0.9]">People.<br />Places.<br />Heritage.</p>
+          <p className="font-display text-4xl font-light leading-[0.9] lg:text-6xl">People.<br />Places.<br />Heritage.</p>
             <p className="mt-5 max-w-sm text-sm text-white/70">Sign in once. Same feed, same stories.</p>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-center px-6 py-16">
+      <div className="flex items-center justify-center px-5 py-12 sm:px-6 sm:py-16">
         <div className="w-full max-w-sm">
           <a href="/" className="md:hidden"><Logo size="lg" light /></a>
-          <h1 className="mt-8 font-display text-4xl font-light">
+          <h1 className="mt-8 font-display text-3xl font-light sm:text-4xl">
             {mode === "login" ? "Welcome back" : "Create your workspace"}
           </h1>
           <p className="mt-2 text-sm text-white/50">

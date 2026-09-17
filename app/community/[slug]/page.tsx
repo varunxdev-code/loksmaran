@@ -33,15 +33,15 @@ export default function CommunityPage() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={community.image} alt="" className="h-64 w-full object-cover md:h-80" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
-        <div className="absolute inset-x-0 bottom-0 p-6 text-[#f6f1e8] md:p-8">
+        <div className="absolute inset-x-0 bottom-0 p-4 text-[#f6f1e8] sm:p-6 md:p-8">
           <p className="text-[11px] uppercase tracking-[0.18em] text-white/75">{community.kind} · {community.region} · {community.state}</p>
-          <h1 className="mt-2 font-display text-5xl font-light">{community.name}</h1>
+          <h1 className="mt-2 font-display text-3xl font-light sm:text-5xl">{community.name}</h1>
           <p className="mt-2 max-w-xl text-sm text-white/80">{community.blurb}</p>
           <p className="mt-3 text-xs text-white/60">{posts.length} stories · {community.people} people</p>
         </div>
       </section>
 
-      <div className="mt-6 flex flex-wrap gap-2">
+      <div className="chip-row mt-6">
         {TABS.map((t) => (
           <button key={t} type="button" onClick={() => setTab(t)} className={`chip ${tab === t ? "chip-on" : ""}`}>{t}</button>
         ))}

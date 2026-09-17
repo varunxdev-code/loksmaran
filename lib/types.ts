@@ -46,6 +46,10 @@ export type Post = {
   likes: number;
   fromVoice: boolean;
   comments: Comment[];
+  source?: string;
+  sourceUrl?: string;
+  license?: string;
+  coordinates?: { lat: number; lng: number };
 };
 
 export type Community = {

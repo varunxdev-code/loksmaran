@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { DM_Sans, Oswald } from "next/font/google";
 import { RootChrome } from "@/components/root-chrome";
 import "./globals.css";
@@ -9,6 +9,13 @@ const display = Oswald({ subsets: ["latin"], weight: ["300", "400", "500"], vari
 export const metadata: Metadata = {
   title: "Loksmaran — people, places, heritage",
   description: "A live archive of Indian towns, villages and cities. Record a story. Keep the place.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#0e0d0c",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

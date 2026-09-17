@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { ME, SEED_POSTS } from "./seed-feed";
+import { ME } from "./seed-feed";
 import type { Author, CategoryId, Comment, Post } from "./types";
 
 type Toast = { id: string; text: string };
@@ -17,6 +17,7 @@ type LokState = {
   hydrated: boolean;
   setHydrated: () => void;
   setOffline: (value: boolean) => void;
+  upsertPost: (post: Post) => void;
   addPost: (input: {
     title: string;
     body: string;
@@ -36,16 +37,26 @@ type LokState = {
 };
 
 export const useLok = create<LokState>()((set, get) => ({
-  posts: SEED_POSTS,
+  posts: [],
   me: ME,
   liked: [],
-  saved: ["p05"],
+  saved: [],
   unseen: 0,
   toasts: [],
   offline: false,
   hydrated: false,
   setHydrated: () => set({ hydrated: true }),
   setOffline: (value) => set({ offline: value }),
+  upsertPost: (post) =>
+    set((s) => {
+      const exists = s.posts.some((p) => p.id === post.id);
+      if (!exists) return { posts: [...s.posts, post] };
+      return {
+        posts: s.posts.map((p) =>
+          p.id === post.id ? { ...post, comments: p.comments, likes: p.likes, author: p.author.id === s.me.id ? p.author : post.author } : p,
+        ),
+      };
+    }),
   addPost: (input) => {
     const id = `p-${Date.now()}`;
     const post: Post = {

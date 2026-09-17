@@ -97,7 +97,7 @@ export default function FeedPage() {
     }, { rootMargin: "600px" });
     io.observe(node);
     return () => io.disconnect();
-  }, [live]);
+  }, [live.loadMore]);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">

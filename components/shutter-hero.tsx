@@ -43,26 +43,27 @@ export function ShutterHero() {
 
   return (
     <section className="hero-stage">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={slide.src} alt={slide.title} className="hero-photo" />
-      <div className="hero-scrim" />
-      <div className={`shutter ${shut ? "is-shut" : ""}`} aria-hidden>
-        {Array.from({ length: 9 }).map((_, i) => (
-          <i key={i} style={{ transitionDelay: `${i * 38}ms` }} />
-        ))}
+      <div className="hero-media">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={slide.src} alt={slide.title} className="hero-photo" />
+        <div className="hero-scrim" />
+        <div className={`shutter ${shut ? "is-shut" : ""}`} aria-hidden>
+          {Array.from({ length: 9 }).map((_, i) => (
+            <i key={i} style={{ transitionDelay: `${i * 38}ms` }} />
+          ))}
+        </div>
+        <h1 className="hero-word">
+          <span>LOK</span>
+          <span>SMA</span>
+          <span>RAN</span>
+        </h1>
       </div>
 
-      <h1 className="hero-word">
-        <span>LOK</span>
-        <span>SMA</span>
-        <span>RAN</span>
-      </h1>
-
       <div className="hero-cta">
-        <Go href="/feed" className="btn btn-solid min-w-[200px]">
+        <Go href="/feed" className="btn btn-solid min-w-0 lg:min-w-[200px]">
           Open the live feed
         </Go>
-        <Go href="/create" className="btn btn-ghost min-w-[200px]">
+        <Go href="/create" className="btn btn-ghost min-w-0 lg:min-w-[200px]">
           Record a village story
         </Go>
       </div>
@@ -71,12 +72,12 @@ export function ShutterHero() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={peek.src} alt="" />
         <div className="flex items-end justify-between gap-3 px-4 py-3">
-          <div>
+          <div className="min-w-0">
             <p className="text-[11px] tracking-[0.18em] text-white/55">{slide.n}/</p>
-            <p className="mt-1 text-[15px] font-medium leading-tight tracking-wide">{slide.title.toUpperCase()}</p>
+            <p className="mt-1 text-[14px] font-medium leading-tight tracking-wide sm:text-[15px]">{slide.title.toUpperCase()}</p>
             <p className="mt-1 text-xs text-white/55">{slide.place}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex shrink-0 gap-2">
             <button type="button" className="grid h-9 w-9 place-items-center rounded-full border border-white/25 text-white/80" onClick={() => go(index - 1)} aria-label="Previous village">
               ←
             </button>

@@ -75,7 +75,7 @@ function MarketingShell({ path, children }: { path: string; children: React.Reac
   const [open, setOpen] = useState(false);
   return (
     <div className="min-h-svh bg-night text-[#f6f1e8]">
-      <header className="sticky top-0 z-50 bg-night/95 px-3 pt-2 backdrop-blur sm:px-4 md:px-6">
+      <header className="sticky top-0 z-50 bg-night/95 px-3 pt-[max(8px,env(safe-area-inset-top))] backdrop-blur sm:px-4 md:px-6">
         <div className="flex h-14 items-center justify-between gap-2 sm:h-[64px] md:h-[72px]">
           <Go href="/" className="min-w-0 shrink-0">
             <Logo size="sm" light />
@@ -91,7 +91,7 @@ function MarketingShell({ path, children }: { path: string; children: React.Reac
             <Go href={session ? "/feed" : "/signup"} className="btn btn-ghost h-10 min-h-10 px-3 text-[11px] tracking-[0.12em] uppercase sm:h-11 sm:min-h-11 sm:px-5">
               {session ? "Feed" : "Start"}
             </Go>
-            <button type="button" className="grid h-10 w-10 place-items-center rounded-full border border-white/20 text-lg lg:hidden" onClick={() => setOpen((v) => !v)} aria-label="Menu">
+            <button type="button" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/20 text-lg lg:hidden" onClick={() => setOpen((v) => !v)} aria-label="Menu">
               {open ? "×" : "☰"}
             </button>
           </div>
@@ -185,7 +185,7 @@ function AppShell({ path, children }: { path: string; children: React.ReactNode 
           <Go href="/explore" className="grid h-10 w-10 place-items-center rounded-full border border-line text-ink md:hidden" aria-label="Search">
             <Search size={16} />
           </Go>
-          <Go href="/create" className="btn btn-ink h-10 min-h-10 px-3 text-sm sm:px-4 lg:h-11 lg:min-h-11 lg:px-6">
+          <Go href="/create" className="btn btn-ink h-10 min-h-10 shrink-0 px-3 text-sm sm:px-4 lg:h-11 lg:min-h-11 lg:px-6">
             <span className="sm:hidden">Share</span>
             <span className="hidden sm:inline">Share a story</span>
           </Go>

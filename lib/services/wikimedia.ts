@@ -36,7 +36,7 @@ export async function searchCommons(query: string, category: FeedCategory, state
     iiurlwidth: "1400",
   })}`;
   try {
-    const data = await cached(`cm:${query}`, 20 * 60_000, () => getJson<Commons>(url, undefined, 1200));
+    const data = await cached(`cm:${query}`, 20 * 60_000, () => getJson<Commons>(url, undefined, 8000));
     return Object.values(data.query?.pages ?? [])
       .map((page) => {
         const info = page.imageinfo?.[0];

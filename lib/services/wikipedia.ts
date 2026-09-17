@@ -20,7 +20,7 @@ export async function wikipediaSummary(title: string): Promise<Summary | null> {
   const slug = encodeURIComponent(title.replace(/ /g, "_"));
   const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${slug}`;
   try {
-    return await cached(`wp:${title}`, 30 * 60_000, () => getJson<Summary>(url, undefined, 1800));
+    return await cached(`wp:${title}`, 30 * 60_000, () => getJson<Summary>(url, undefined, 8000));
   } catch {
     return null;
   }
@@ -36,7 +36,7 @@ export async function searchWikipedia(query: string, limit = 10): Promise<string
     origin: "*",
   })}`;
   try {
-    const data = await cached(`wps:${query}:${limit}`, 15 * 60_000, () => getJson<SearchRes>(url, undefined, 900));
+    const data = await cached(`wps:${query}:${limit}`, 15 * 60_000, () => getJson<SearchRes>(url, undefined, 8000));
     return (data.query?.search ?? []).map((s) => s.title);
   } catch {
     return [];
@@ -44,7 +44,7 @@ export async function searchWikipedia(query: string, limit = 10): Promise<string
 }
 
 export async function wikipediaItems(query: string, category: FeedCategory, state?: string): Promise<FeedItem[]> {
-  const titles = await searchWikipedia(query, 8);
+  const titles = await searchWikipedia(query, 6);
   const pages = await Promise.all(titles.map((t) => wikipediaSummary(t)));
   return pages
     .filter((p): p is Summary => Boolean(p?.title && (p.extract || p.thumbnail)))

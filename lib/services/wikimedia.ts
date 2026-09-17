@@ -28,7 +28,7 @@ export async function searchCommons(query: string, category: FeedCategory, state
     action: "query",
     format: "json",
     generator: "search",
-    gsrsearch: `${query} filetype:bitmap`,
+    gsrsearch: `${query} India filetype:bitmap -delegation -minister -meeting -conference`,
     gsrnamespace: "6",
     gsrlimit: "12",
     prop: "imageinfo",
@@ -44,6 +44,7 @@ export async function searchCommons(query: string, category: FeedCategory, state
       if (!image) continue;
       const meta = info.extmetadata || {};
       const title = stripHtml(meta.ObjectName?.value) || (page.title || "").replace(/^File:/i, "").replace(/\.[a-z0-9]+$/i, "");
+      if (/delegation|minister|bilateral|press (meet|release)|inaugurat|conference/i.test(`${title} ${stripHtml(meta.ImageDescription?.value)}`)) continue;
       items.push({
         id: packId("commons", page.title || image),
         title,

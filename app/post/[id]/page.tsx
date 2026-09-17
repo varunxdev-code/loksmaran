@@ -1,19 +1,24 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bookmark, Heart, Share2 } from "lucide-react";
 import { AudioPlayer } from "@/components/audio-player";
 import { Go } from "@/components/go-link";
 import { categoryLabel, communityBySlug } from "@/lib/taxonomy";
 import { formatCount, timeAgo } from "@/lib/format";
+import { feedItemToPost } from "@/lib/adapter";
 import { useLok } from "@/lib/store";
+import type { FeedItem } from "@/lib/content";
 
 export default function PostPage() {
   const { id } = useParams<{ id: string }>();
-  const post = useLok((s) => s.posts.find((p) => p.id === id));
-  const liked = useLok((s) => s.liked.includes(id));
-  const saved = useLok((s) => s.saved.includes(id));
+  const decoded = decodeURIComponent(id || "");
+  const postId = decoded || id || "";
+  const post = useLok((s) => s.posts.find((p) => p.id === postId));
+  const upsertPost = useLok((s) => s.upsertPost);
+  const liked = useLok((s) => s.liked.includes(decoded) || s.liked.includes(id));
+  const saved = useLok((s) => s.saved.includes(decoded) || s.saved.includes(id));
   const toggleLike = useLok((s) => s.toggleLike);
   const toggleSave = useLok((s) => s.toggleSave);
   const addComment = useLok((s) => s.addComment);
@@ -22,11 +27,31 @@ export default function PostPage() {
   const [text, setText] = useState("");
   const [replyFor, setReplyFor] = useState<string | null>(null);
   const [reply, setReply] = useState("");
+  const [loading, setLoading] = useState(!post);
+
+  useEffect(() => {
+    if (post || !decoded) return;
+    let on = true;
+    setLoading(true);
+    void fetch(`/api/feed/item?id=${encodeURIComponent(decoded)}`)
+      .then((r) => r.json())
+      .then((d: { item?: FeedItem }) => {
+        if (!on || !d.item) return;
+        const mapped = feedItemToPost(d.item);
+        if (mapped) upsertPost(mapped);
+      })
+      .finally(() => {
+        if (on) setLoading(false);
+      });
+    return () => {
+      on = false;
+    };
+  }, [decoded, post, upsertPost]);
 
   if (!post) {
     return (
-      <div className="py-16">
-        <h1 className="font-display text-4xl font-light">Story not found</h1>
+      <div className="feed-card px-6 py-16">
+        <h1 className="font-display text-4xl font-light">{loading ? "Opening story…" : "Story not found"}</h1>
         <a href="/feed" className="btn btn-ink mt-6">Back to the feed</a>
       </div>
     );
@@ -57,8 +82,16 @@ export default function PostPage() {
           type="button"
           className="chip"
           onClick={() => {
-            void navigator.clipboard.writeText(window.location.href);
-            toast("Link copied");
+            const url = window.location.href;
+            if (navigator.share) {
+              void navigator.share({ title: post.title, url }).catch(() => {
+                void navigator.clipboard.writeText(url);
+                toast("Link copied");
+              });
+            } else {
+              void navigator.clipboard.writeText(url);
+              toast("Link copied");
+            }
           }}
         >
           <Share2 size={14} /> Share
@@ -84,8 +117,8 @@ export default function PostPage() {
           <button className="btn btn-ink h-12 min-h-12 w-full px-6 sm:w-auto" type="submit">Post</button>
         </form>
         <ul className="mt-6 space-y-3">
-          {post.comments.length === 0 ? <li className="text-sm text-mute">No comments yet.</li> : null}
-          {post.comments.map((c) => (
+          {post.comments?.length === 0 ? <li className="text-sm text-mute">No comments yet.</li> : null}
+          {(post.comments ?? []).map((c) => (
             <li key={c.id} className="card p-4">
               <p className="text-sm font-medium">{c.author.name}</p>
               <p className="mt-1 leading-relaxed">{c.body}</p>
@@ -105,7 +138,7 @@ export default function PostPage() {
                   <button className="btn btn-ink h-12 min-h-12 px-5" type="submit">Send</button>
                 </form>
               ) : null}
-              {c.replies.map((r) => (
+              {(c.replies ?? []).map((r) => (
                 <div key={r.id} className="mt-3 ml-4 border-l border-line pl-4 text-sm">
                   <p className="font-medium">{r.author.name}</p>
                   <p className="mt-1">{r.body}</p>

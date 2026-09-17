@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { ErrorCatch } from "@/components/error-catch";
 import { PostCard } from "@/components/post-card";
 import { FeedSkeleton } from "@/components/feed-skeleton";
 import { FEED_FILTERS, type FeedCategory } from "@/lib/content";
@@ -22,8 +23,9 @@ const OLD: Record<CategoryId, FeedCategory> = {
 
 function ExploreInner() {
   const params = useSearchParams();
-  const localPosts = useLok((s) => s.posts.filter((p) => p.id.startsWith("p-")));
+  const allPosts = useLok((s) => s.posts);
   const upsertPost = useLok((s) => s.upsertPost);
+  const localPosts = useMemo(() => allPosts.filter((p) => p.id.startsWith("p-")), [allPosts]);
   const [q, setQ] = useState(params.get("q") || "");
   const [debounced, setDebounced] = useState(q);
   const initialCat = params.get("cat") as CategoryId | null;
@@ -65,7 +67,7 @@ function ExploreInner() {
       <div className="mt-6 space-y-3">
         {live.loading ? <FeedSkeleton /> : found.map((post) => <PostCard key={post.id} post={post} />)}
         {live.loadingMore ? <FeedSkeleton count={2} /> : null}
-        {!live.loading && found.length === 0 ? <p className="card p-8 text-mute">Nothing matched. Try another place or category.</p> : null}
+        {!live.loading && found.length === 0 ? <p className="feed-card p-8 text-mute">Nothing matched. Try another place or category.</p> : null}
       </div>
     </div>
   );
@@ -74,7 +76,9 @@ function ExploreInner() {
 export default function ExplorePage() {
   return (
     <Suspense fallback={<p className="text-mute">Loading search…</p>}>
-      <ExploreInner />
+      <ErrorCatch>
+        <ExploreInner />
+      </ErrorCatch>
     </Suspense>
   );
 }

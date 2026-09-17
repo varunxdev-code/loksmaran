@@ -18,30 +18,47 @@ const CAT: Record<FeedCategory, CategoryId> = {
   places: "sthaan",
 };
 
-export function feedItemToPost(item: FeedItem): Post {
-  const name = item.author || item.source;
-  return {
-    id: item.id,
-    title: item.title,
-    body: item.description,
-    imageUrl: item.image || "",
-    audioUrl: item.audio,
-    category: CAT[item.category] || "sthaan",
-    communitySlug: slugify(item.place?.name || item.location.split(",")[0] || "india"),
-    author: {
-      id: `src-${item.source}`,
-      name,
-      location: item.location,
-      bio: item.source,
-      initials: initials(name),
-    },
-    createdAt: item.date && !Number.isNaN(Date.parse(item.date)) ? new Date(item.date).toISOString() : new Date().toISOString(),
-    likes: 0,
-    fromVoice: Boolean(item.audio),
-    comments: [],
-    source: item.source,
-    sourceUrl: item.sourceUrl,
-    license: item.license,
-    coordinates: item.coordinates,
-  };
+function text(value: unknown, fallback = "") {
+  return typeof value === "string" && value.trim() ? value.trim() : fallback;
+}
+
+export function feedItemToPost(item: FeedItem): Post | null {
+  try {
+    const title = text(item?.title);
+    if (!title) return null;
+    const location = text(item.location) || text(item.state) || "India";
+    const source = text(item.source, "Archive");
+    const name = text(item.author, source);
+    const placeName = text(item.place?.name) || location.split(",")[0] || "india";
+    const created =
+      item.date && !Number.isNaN(Date.parse(item.date))
+        ? new Date(item.date).toISOString()
+        : new Date().toISOString();
+    return {
+      id: text(item.id, `item-${title.slice(0, 24)}`),
+      title,
+      body: text(item.description, title),
+      imageUrl: text(item.image),
+      audioUrl: text(item.audio) || undefined,
+      category: CAT[item.category] || "sthaan",
+      communitySlug: slugify(placeName),
+      author: {
+        id: `src-${source}`,
+        name,
+        location,
+        bio: source,
+        initials: initials(name),
+      },
+      createdAt: created,
+      likes: 0,
+      fromVoice: Boolean(item.audio),
+      comments: [],
+      source,
+      sourceUrl: text(item.sourceUrl) || undefined,
+      license: text(item.license) || undefined,
+      coordinates: item.coordinates,
+    };
+  } catch {
+    return null;
+  }
 }

@@ -43,28 +43,34 @@ export async function searchWikipedia(query: string, limit = 10): Promise<string
   }
 }
 
-export async function wikipediaItems(query: string, category: FeedCategory, state?: string): Promise<FeedItem[]> {
-  const titles = await searchWikipedia(query, 6);
+export async function wikipediaByTitles(titles: string[], category: FeedCategory, state?: string): Promise<FeedItem[]> {
   const pages = await Promise.all(titles.map((t) => wikipediaSummary(t)));
   return pages
     .filter((p): p is Summary => Boolean(p?.title && (p.extract || p.thumbnail)))
-    .map((p) => {
-      const title = p.title!;
-      return {
-        id: packId("wiki", title),
-        title,
-        description: p.extract || p.description || title,
-        image: p.originalimage?.source || p.thumbnail?.source,
-        location: state ? `${title}, ${state}` : title,
-        state,
-        category,
-        source: "Wikipedia",
-        sourceUrl: p.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}`,
-        license: "CC BY-SA 4.0",
-        author: "Wikipedia contributors",
-        date: p.timestamp,
-      } satisfies FeedItem;
-    });
+    .map((p) => toWikiItem(p, category, state));
+}
+
+function toWikiItem(p: Summary, category: FeedCategory, state?: string): FeedItem {
+  const title = p.title!;
+  return {
+    id: packId("wiki", title),
+    title,
+    description: p.extract || p.description || title,
+    image: p.originalimage?.source || p.thumbnail?.source,
+    location: state ? `${title}, ${state}` : `${title}, India`,
+    state,
+    category,
+    source: "Wikipedia",
+    sourceUrl: p.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}`,
+    license: "CC BY-SA 4.0",
+    author: "Wikipedia contributors",
+    date: p.timestamp,
+  };
+}
+
+export async function wikipediaItems(query: string, category: FeedCategory, state?: string): Promise<FeedItem[]> {
+  const titles = await searchWikipedia(query, 6);
+  return wikipediaByTitles(titles, category, state);
 }
 
 export async function enrichWithWikipedia(item: FeedItem): Promise<FeedItem> {

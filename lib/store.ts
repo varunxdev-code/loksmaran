@@ -49,13 +49,8 @@ export const useLok = create<LokState>()((set, get) => ({
   setOffline: (value) => set({ offline: value }),
   upsertPost: (post) =>
     set((s) => {
-      const exists = s.posts.some((p) => p.id === post.id);
-      if (!exists) return { posts: [...s.posts, post] };
-      return {
-        posts: s.posts.map((p) =>
-          p.id === post.id ? { ...post, comments: p.comments, likes: p.likes, author: p.author.id === s.me.id ? p.author : post.author } : p,
-        ),
-      };
+      if (s.posts.some((p) => p.id === post.id)) return s;
+      return { posts: [...s.posts, post] };
     }),
   addPost: (input) => {
     const id = `p-${Date.now()}`;

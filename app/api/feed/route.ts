@@ -4,6 +4,7 @@ import { getFeed } from "@/lib/services/feed-service";
 
 export const runtime = "nodejs";
 export const revalidate = 300;
+export const maxDuration = 20;
 
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;

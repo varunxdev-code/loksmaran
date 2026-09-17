@@ -11,7 +11,8 @@ const TABS = ["Stories", "People", "Customs", "Place"] as const;
 export default function CommunityPage() {
   const { slug } = useParams<{ slug: string }>();
   const community = communityBySlug(slug);
-  const posts = useLok((s) => s.posts.filter((p) => p.communitySlug === slug));
+  const allPosts = useLok((s) => s.posts);
+  const posts = useMemo(() => allPosts.filter((p) => p.communitySlug === slug), [allPosts, slug]);
   const [tab, setTab] = useState<(typeof TABS)[number]>("Stories");
   const people = useMemo(() => {
     const map = new Map(posts.map((p) => [p.author.id, p.author]));

@@ -3,6 +3,7 @@ import { getFeedItem } from "@/lib/services/feed-service";
 
 export const runtime = "nodejs";
 export const revalidate = 600;
+export const maxDuration = 20;
 
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id");

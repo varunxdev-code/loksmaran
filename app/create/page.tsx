@@ -32,6 +32,7 @@ export default function CreatePage() {
   const live = useRef<Recog>(null);
   const media = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
+  const village = COMMUNITIES.find((c) => c.slug === place);
 
   async function onFile(file?: File) {
     if (!file) return;
@@ -64,7 +65,7 @@ export default function CreatePage() {
       rec.start();
       media.current = rec;
     } catch {
-      /* mic optional — transcript still works */
+      /* mic optional */
     }
     const rec = startLiveHindi((text) => {
       if (text) {
@@ -106,7 +107,7 @@ export default function CreatePage() {
       setError("Write or speak the story first.");
       return;
     }
-    const photo = image || COMMUNITIES.find((c) => c.slug === place)?.image;
+    const photo = image || village?.image;
     if (!photo) {
       setError("Add a photo.");
       return;
@@ -132,80 +133,113 @@ export default function CreatePage() {
 
   if (done) {
     return (
-      <div className="py-20 text-center">
-        <p className="font-display text-4xl font-light">It’s on the feed.</p>
+      <div className="feed-card px-6 py-16 text-center">
+        <p className="kicker">Published</p>
+        <p className="mt-3 font-display text-4xl font-light">It’s on the feed.</p>
         <p className="mt-3 text-mute">Taking you there…</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="font-display text-3xl font-light tracking-tight sm:text-4xl">Share a village story</h1>
-      <p className="mt-2 text-mute">Record your voice. Pin it to a real village. It lands on the live feed.</p>
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div>
+        <p className="kicker">Share</p>
+        <h1 className="mt-2 font-display text-3xl font-light tracking-tight sm:text-4xl">Tell a village story</h1>
+        <p className="mt-2 text-mute">Record your voice. Pin it to a real place. It lands on the live feed.</p>
 
-      <div className="mt-8 space-y-6">
-        <label className="block">
-          <span className="text-sm text-mute">Title</span>
-          <input className="field mt-2" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="One line that holds the village" />
-        </label>
+        <div className="mt-6 space-y-5">
+          <label className="block">
+            <span className="text-sm text-mute">Title</span>
+            <input className="field mt-2" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="One line that holds the village" />
+          </label>
 
-        <div className="card p-5">
-          <p className="font-medium">Voice is the point</p>
-          <p className="mt-1 text-sm text-mute">Hold the mic. Hindi or English. We keep the audio and draft the words.</p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            {busy === "rec" ? (
-              <button type="button" className="btn btn-ink" onClick={stopVoice}>Stop recording</button>
-            ) : (
-              <button type="button" className="btn btn-ink" onClick={() => void startVoice()}>
-                <Mic size={16} /> Start speaking
-              </button>
-            )}
+          <div className="feed-card p-5">
+            <p className="font-medium">Voice is the point</p>
+            <p className="mt-1 text-sm text-mute">Hold the mic. Hindi or English. We keep the audio and draft the words.</p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {busy === "rec" ? (
+                <button type="button" className="btn btn-ink" onClick={stopVoice}>Stop recording</button>
+              ) : (
+                <button type="button" className="btn btn-ink" onClick={() => void startVoice()}>
+                  <Mic size={16} /> Start speaking
+                </button>
+              )}
+            </div>
+            <div className="mt-4"><Waveform active={busy === "rec"} /></div>
+            {busy === "rec" ? <p className="mt-2 text-sm text-mute">Listening…</p> : null}
+            {audio ? <AudioPlayer src={audio} label="Your recording" /> : null}
           </div>
-          <div className="mt-4"><Waveform active={busy === "rec"} /></div>
-          {busy === "rec" ? <p className="mt-2 text-sm text-mute">Listening…</p> : null}
-          {audio ? <AudioPlayer src={audio} label="Your recording" /> : null}
-        </div>
 
-        <label className="block">
-          <span className="text-sm text-mute">Story</span>
-          <textarea ref={bodyRef} className="field mt-2 min-h-36" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Speak, or write — you can edit after." />
-        </label>
-
-        <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
-            <span className="text-sm text-mute">Village</span>
-            <select className="field mt-2" value={place} onChange={(e) => setPlace(e.target.value)}>
+            <span className="text-sm text-mute">Story</span>
+            <textarea ref={bodyRef} className="field mt-2 min-h-36" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Speak, or write — you can edit after." />
+          </label>
+
+          <div>
+            <p className="text-sm text-mute">Village</p>
+            <div className="chip-row mt-2">
               {COMMUNITIES.map((c) => (
-                <option key={c.slug} value={c.slug}>{c.name}, {c.state}</option>
+                <button
+                  key={c.slug}
+                  type="button"
+                  onClick={() => setPlace(c.slug)}
+                  className={`village-chip ${place === c.slug ? "village-chip-on" : ""}`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={c.image} alt="" />
+                  <span>{c.name}</span>
+                </button>
               ))}
-            </select>
-          </label>
-          <label className="block">
-            <span className="text-sm text-mute">Category</span>
-            <select className="field mt-2" value={category} onChange={(e) => setCategory(e.target.value as CategoryId)}>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-sm text-mute">Category</p>
+            <div className="chip-row mt-2">
               {CATEGORIES.map((c) => (
-                <option key={c.id} value={c.id}>{c.label}</option>
+                <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`chip ${category === c.id ? "chip-on" : ""}`}>
+                  {c.label}
+                </button>
               ))}
-            </select>
+            </div>
+          </div>
+
+          <label className="dropzone">
+            <input type="file" accept="image/*" className="sr-only" onChange={(e) => void onFile(e.target.files?.[0])} />
+            {image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={image} alt="" className="max-h-56 w-full rounded-2xl object-cover" />
+            ) : (
+              <span>
+                <strong>Add a photo</strong>
+                <em>Tap to upload from your phone or computer</em>
+              </span>
+            )}
           </label>
+
+          {error ? <p className="text-sm text-blood">{error}</p> : null}
+
+          <div className="sticky bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-20 lg:static lg:bottom-auto">
+            <button type="button" className="btn btn-ink w-full sm:w-auto sm:min-w-[240px]" onClick={() => void publish()} disabled={busy === "pub"}>
+              {busy === "pub" ? "Publishing…" : "Publish to the live feed"}
+            </button>
+          </div>
         </div>
-
-        <label className="block">
-          <span className="text-sm text-mute">Photo</span>
-          <input type="file" accept="image/*" className="mt-2 block text-sm" onChange={(e) => void onFile(e.target.files?.[0])} />
-          {image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={image} alt="" className="mt-3 max-h-56 rounded-2xl object-cover" />
-          ) : null}
-        </label>
-
-        {error ? <p className="text-sm text-blood">{error}</p> : null}
-
-        <button type="button" className="btn btn-ink w-full sm:w-auto sm:min-w-[220px]" onClick={() => void publish()} disabled={busy === "pub"}>
-          {busy === "pub" ? "Publishing…" : "Publish to the live feed"}
-        </button>
       </div>
+
+      <aside className="hidden lg:block">
+        <p className="text-[11px] uppercase tracking-[0.16em] text-mute">Preview</p>
+        <article className="feed-card mt-3 overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={image || village?.image} alt="" className="aspect-[16/10] w-full object-cover" />
+          <div className="p-5">
+            <p className="text-[12px] text-mute">r/{village?.name} · You</p>
+            <h2 className="mt-2 font-display text-2xl font-light">{title || "Your title lands here"}</h2>
+            <p className="mt-2 line-clamp-4 text-sm text-mute">{body || "Speak or write the story. This is how it will read on the feed."}</p>
+          </div>
+        </article>
+      </aside>
     </div>
   );
 }

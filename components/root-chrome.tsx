@@ -152,6 +152,14 @@ function SiteFooter() {
   );
 }
 
+const SIDE = [
+  { href: "/feed", label: "Live feed", icon: Flame },
+  { href: "/explore", label: "Explore", icon: Search },
+  { href: "/community", label: "Villages", icon: Globe2 },
+  { href: "/create", label: "New story", icon: Plus },
+  { href: "/profile", label: "Profile", icon: UserRound },
+] as const;
+
 const BOTTOM = [
   { href: "/feed", label: "Feed", icon: Flame },
   { href: "/explore", label: "Search", icon: Search },
@@ -166,8 +174,8 @@ function AppShell({ path, children }: { path: string; children: React.ReactNode 
   const unseen = useLok((s) => s.unseen);
 
   return (
-    <div className="min-h-svh bg-ivory text-ink">
-      <header className="sticky top-0 z-40 border-b border-line bg-ivory/90 backdrop-blur">
+    <div className="app-canvas min-h-svh text-ink">
+      <header className="sticky top-0 z-40 border-b border-line bg-[#f4efe6]/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-2 px-3 py-2.5 sm:gap-3 sm:py-3 lg:px-4">
           <Go href="/" className="min-w-0 shrink-0">
             <Logo size="sm" />
@@ -180,9 +188,9 @@ function AppShell({ path, children }: { path: string; children: React.ReactNode 
               goTo(`/explore?q=${encodeURIComponent(String(q || ""))}`);
             }}
           >
-            <input name="q" className="field h-11 rounded-full bg-white/80" placeholder="Search a village, craft, festival…" />
+            <input name="q" className="field h-11 rounded-full bg-white shadow-sm" placeholder="Search a village, craft, festival…" />
           </form>
-          <Go href="/explore" className="grid h-10 w-10 place-items-center rounded-full border border-line text-ink md:hidden" aria-label="Search">
+          <Go href="/explore" className="grid h-10 w-10 place-items-center rounded-full border border-line bg-white text-ink md:hidden" aria-label="Search">
             <Search size={16} />
           </Go>
           <Go href="/create" className="btn btn-ink h-10 min-h-10 shrink-0 px-3 text-sm sm:px-4 lg:h-11 lg:min-h-11 lg:px-6">
@@ -192,25 +200,24 @@ function AppShell({ path, children }: { path: string; children: React.ReactNode 
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-6xl gap-6 px-3 py-4 sm:px-4 sm:py-6 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-8 lg:px-4 lg:py-8">
+      <div className="mx-auto grid max-w-6xl gap-6 px-3 py-4 sm:px-4 sm:py-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8 lg:px-4 lg:py-8">
         <aside className="hidden lg:block">
           <nav className="sticky top-24 grid gap-1 text-sm">
-            {[
-              ["/feed", "Live feed"],
-              ["/explore", "Explore"],
-              ["/community", "Villages"],
-              ["/create", "New story"],
-              ["/profile", "Profile"],
-            ].map(([href, label]) => (
-              <Go
-                key={href}
-                href={href}
-                className={`rounded-full px-4 py-2.5 font-medium ${path === href || path.startsWith(`${href}/`) ? "side-on" : "text-mute hover:bg-white"}`}
-              >
-                {label}
-                {href === "/feed" && unseen > 0 ? ` · ${unseen}` : ""}
-              </Go>
-            ))}
+            {SIDE.map((item) => {
+              const Icon = item.icon;
+              const on = path === item.href || path.startsWith(`${item.href}/`);
+              return (
+                <Go
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-3 rounded-2xl px-4 py-2.5 font-medium ${on ? "side-on" : "text-mute hover:bg-white"}`}
+                >
+                  <Icon size={16} />
+                  {item.label}
+                  {item.href === "/feed" && unseen > 0 ? ` · ${unseen}` : ""}
+                </Go>
+              );
+            })}
             {session ? (
               <button
                 type="button"
@@ -242,14 +249,14 @@ function AppShell({ path, children }: { path: string; children: React.ReactNode 
         </div>
       </footer>
 
-      <nav className="bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ivory/95 backdrop-blur lg:hidden">
+      <nav className="bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-line bg-[#f4efe6]/95 backdrop-blur lg:hidden">
         <div className="grid grid-cols-5 text-[10px] sm:text-[11px]">
           {BOTTOM.map((item) => {
             const Icon = item.icon;
             const on = path === item.href || path.startsWith(`${item.href}/`);
             return (
               <Go key={item.href} href={item.href} className={`grid place-items-center gap-0.5 py-2 ${on ? "text-ink" : "text-mute"}`}>
-                <span className={`grid h-8 w-8 place-items-center rounded-full ${item.href === "/create" ? "bg-ink text-[#f6f1e8]" : ""}`}>
+                <span className={`grid h-9 w-9 place-items-center rounded-full ${item.href === "/create" ? "bg-ink text-[#f6f1e8] shadow-lg" : on ? "bg-white" : ""}`}>
                   <Icon size={16} />
                 </span>
                 {item.label}

@@ -15,7 +15,7 @@ export default function ProfilePage() {
   const mine = posts.filter((p) => p.author.id === me.id);
   const kept = posts.filter((p) => saved.includes(p.id));
   const comments = posts.flatMap((p) =>
-    p.comments.filter((c) => c.author.id === me.id).map((c) => ({ post: p, comment: c })),
+    (p.comments ?? []).filter((c) => c.author.id === me.id).map((c) => ({ post: p, comment: c })),
   );
   const [tab, setTab] = useState<(typeof TABS)[number]>("Stories");
 

@@ -6,7 +6,7 @@ import { unpackId } from "./ids";
 import { getOsmPlace, nominatimSearch, searchOsm } from "./osm";
 import { getWikidataEntity, listDistricts, listPlaces, searchWikidata } from "./wikidata";
 import { commonsImageFor, searchCommons } from "./wikimedia";
-import { enrichWithWikipedia, wikipediaItems, wikipediaSummary } from "./wikipedia";
+import { enrichWithWikipedia, wikipediaByTitles, wikipediaItems, wikipediaSummary } from "./wikipedia";
 
 export type FeedQuery = {
   category?: FeedCategory;
@@ -22,20 +22,39 @@ export type FeedQuery = {
 const PAGE = 12;
 
 const TOPIC: Record<FeedCategory, string> = {
-  all: "heritage culture",
+  all: "heritage village festival temple",
   nearby: "temple village heritage",
-  villages: "village",
-  cities: "city",
+  villages: "village heritage",
+  cities: "historic city India",
   heritage: "heritage monument temple fort",
-  festivals: "festival",
-  food: "cuisine food",
-  crafts: "handicraft textile",
-  music: "folk music",
-  stories: "folklore legend",
-  history: "history fort",
-  traditions: "tradition ritual",
-  places: "place landmark",
+  festivals: "festival India Holi Onam",
+  food: "Indian cuisine street food",
+  crafts: "handicraft textile India",
+  music: "folk music India",
+  stories: "folklore legend India",
+  history: "history fort India",
+  traditions: "tradition ritual India",
+  places: "landmark India",
 };
+
+const CURATED: Record<FeedCategory, string[]> = {
+  all: ["Holi", "Pattachitra", "Hampi", "Rann of Kutch", "Onam", "Khajuraho", "Madhubani art", "Bihu", "Meenakshi Temple", "Ziro Valley", "Raghurajpur", "Khonoma"],
+  nearby: ["Hampi", "Qutb Minar", "Meenakshi Temple", "Hawa Mahal"],
+  villages: ["Raghurajpur", "Khonoma", "Mawlynnong", "Pochampally", "Hodka", "Kumbalangi"],
+  cities: ["Varanasi", "Jaipur", "Udaipur", "Madurai", "Kochi", "Mysore"],
+  heritage: ["Hampi", "Khajuraho", "Qutb Minar", "Konark Sun Temple", "Ajanta Caves", "Sanchi"],
+  festivals: ["Holi", "Onam", "Bihu", "Pongal", "Navaratri", "Durga Puja"],
+  food: ["Hyderabadi biryani", "Masala dosa", "Dhokla", "Litti chokha", "Rogan josh"],
+  crafts: ["Pattachitra", "Madhubani art", "Pochampally sari", "Chikankari", "Bidriware"],
+  music: ["Baul", "Qawwali", "Bhangra", "Carnatic music", "Lavani"],
+  stories: ["Panchatantra", "Jataka tales", "Ramayana", "Mahabharata", "Vikramaditya"],
+  history: ["Chola dynasty", "Vijayanagara Empire", "Mughal Empire", "Maurya Empire", "Maratha Empire"],
+  traditions: ["Yoga", "Ayurveda", "Mehndi", "Rangoli", "Kathakali"],
+  places: ["Taj Mahal", "Gateway of India", "Charminar", "India Gate", "Victoria Memorial, Kolkata"],
+};
+
+const JUNK = /delegation|bilateral|press (meet|release)|inaugurat|\bminister\b|\bconference\b|\bMOU\b|\bsigned a\b/i;
+const CULTURE = /temple|fort|village|festival|holi|diwali|onam|bihu|pongal|craft|folk|ghat|palace|monument|heritage|textile|dance|cuisine|food|mask|ikat|pattachitra|weav|embroider|rann|stepwell|stupa|mandir|mela|haveli|sari|saree|music|art|painting|cave|tomb|mosque|gurudwara|church|fair|ritual|tradition|folk|city|india|bharat/i;
 
 function phrase(opts: FeedQuery) {
   const loc = [opts.q, opts.place, opts.district, opts.state, "India"].filter(Boolean).join(" ");
@@ -57,8 +76,19 @@ function dedupe(items: FeedItem[]) {
   });
 }
 
+function keepItem(item: FeedItem) {
+  if (!item?.title) return false;
+  const blob = `${item.title} ${item.description || ""} ${item.location || ""}`;
+  if (JUNK.test(blob)) return false;
+  if (item.source === "Wikipedia" || item.source === "Wikidata") return true;
+  const states = INDIA_STATES.map((s) => s.name.toLowerCase());
+  const hay = blob.toLowerCase();
+  const inIndia = hay.includes("india") || hay.includes("bharat") || Boolean(item.state) || states.some((s) => hay.includes(s));
+  return inIndia && (CULTURE.test(blob) || Boolean(item.image));
+}
+
 async function fillImages(items: FeedItem[]) {
-  const missing = items.filter((i) => !i.image).slice(0, 4);
+  const missing = items.filter((i) => !i.image).slice(0, 3);
   await Promise.all(
     missing.map(async (item) => {
       item.image = await commonsImageFor(`${item.title} India`);
@@ -88,8 +118,10 @@ async function assemble(opts: FeedQuery): Promise<FeedItem[]> {
   const q = phrase(opts);
   const wikiQ = [opts.place || opts.district || opts.state || "India", TOPIC[category]].join(" ");
   const geo = category === "nearby" || category === "villages" || category === "cities" || category === "places";
+  const curated = opts.q || opts.place ? [] : (CURATED[category] || CURATED.all).slice(0, 8);
 
   const settled = await Promise.allSettled([
+    curated.length ? wikipediaByTitles(curated, category, opts.state) : Promise.resolve([] as FeedItem[]),
     searchCommons(q, category, opts.state),
     wikipediaItems(wikiQ, category, opts.state),
     searchWikidata({
@@ -99,7 +131,7 @@ async function assemble(opts: FeedQuery): Promise<FeedItem[]> {
       place: opts.place || opts.q,
       lat: opts.lat,
       lng: opts.lng,
-      limit: 10,
+      limit: 8,
     }),
     geo
       ? searchOsm({
@@ -117,9 +149,9 @@ async function assemble(opts: FeedQuery): Promise<FeedItem[]> {
     if (result.status === "fulfilled") raw.push(...result.value);
   }
 
-  let items = dedupe(raw);
-  const head = await Promise.all(items.slice(0, 8).map((item) => enrichWithWikipedia(item)));
-  items = dedupe([...head, ...items.slice(8)]);
+  let items = dedupe(raw).filter(keepItem);
+  const head = await Promise.all(items.slice(0, 6).map((item) => enrichWithWikipedia(item)));
+  items = dedupe([...head, ...items.slice(6)]);
   items = await fillImages(items);
   items = await maybeAudio(items, category, q);
   return items.filter((item) => item.title && (item.image || item.description));

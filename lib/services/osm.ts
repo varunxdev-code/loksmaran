@@ -159,22 +159,24 @@ export async function osmCommunities(opts: { state?: string; kind?: string; q?: 
         const title = tags.name || tags["name:en"];
         if (!title) return null;
         const k = kindFromTags(tags);
+        const kind: Community["kind"] = k === "City" ? "City" : k === "Town" ? "Town" : "Village";
         const stateName = tags["addr:state"] || st?.name || "India";
         const region = INDIA_STATES.find((s) => s.name === stateName)?.region ?? "North";
         const lat = el.lat ?? el.center?.lat;
         const lng = el.lon ?? el.center?.lon;
-        return {
+        const row: Community & { coordinates?: Coordinates } = {
           slug: slugify(title),
           name: title,
           nameHi: tags["name:hi"] || title,
           state: stateName,
-          kind: k === "Site" ? "Village" : k,
+          kind,
           region,
           image: "",
-          blurb: tags.description || `${title} is a ${String(k).toLowerCase()} in ${stateName}.`,
+          blurb: tags.description || `${title} is a ${kind.toLowerCase()} in ${stateName}.`,
           people: 0,
           coordinates: lat != null && lng != null ? { lat, lng } : undefined,
         };
+        return row;
       })
       .filter((x): x is Community & { coordinates?: Coordinates } => Boolean(x));
   } catch {

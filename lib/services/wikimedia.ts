@@ -37,31 +37,29 @@ export async function searchCommons(query: string, category: FeedCategory, state
   })}`;
   try {
     const data = await cached(`cm:${query}`, 20 * 60_000, () => getJson<Commons>(url, undefined, 8000));
-    return Object.values(data.query?.pages ?? [])
-      .map((page) => {
-        const info = page.imageinfo?.[0];
-        const image = info?.thumburl || info?.url;
-        if (!image) return null;
-        const meta = info.extmetadata || {};
-        const title = stripHtml(meta.ObjectName?.value) || (page.title || "").replace(/^File:/i, "").replace(/\.[a-z0-9]+$/i, "");
-        const artist = stripHtml(meta.Artist?.value) || "Wikimedia Commons";
-        const license = stripHtml(meta.LicenseShortName?.value) || "CC BY-SA";
-        return {
-          id: packId("commons", page.title || image),
-          title,
-          description: stripHtml(meta.ImageDescription?.value) || `${title} — cultural photograph from Wikimedia Commons.`,
-          image,
-          location: state || "India",
-          state,
-          category,
-          source: "Wikimedia Commons",
-          sourceUrl: info.descriptionurl,
-          license,
-          author: artist,
-          date: stripHtml(meta.DateTimeOriginal?.value || meta.DateTime?.value),
-        } satisfies FeedItem;
-      })
-      .filter((x): x is FeedItem => Boolean(x));
+    const items: FeedItem[] = [];
+    for (const page of Object.values(data.query?.pages ?? {})) {
+      const info = page.imageinfo?.[0];
+      const image = info?.thumburl || info?.url;
+      if (!image) continue;
+      const meta = info.extmetadata || {};
+      const title = stripHtml(meta.ObjectName?.value) || (page.title || "").replace(/^File:/i, "").replace(/\.[a-z0-9]+$/i, "");
+      items.push({
+        id: packId("commons", page.title || image),
+        title,
+        description: stripHtml(meta.ImageDescription?.value) || `${title} — cultural photograph from Wikimedia Commons.`,
+        image,
+        location: state || "India",
+        state,
+        category,
+        source: "Wikimedia Commons",
+        sourceUrl: info.descriptionurl,
+        license: stripHtml(meta.LicenseShortName?.value) || "CC BY-SA",
+        author: stripHtml(meta.Artist?.value) || "Wikimedia Commons",
+        date: stripHtml(meta.DateTimeOriginal?.value || meta.DateTime?.value),
+      });
+    }
+    return items;
   } catch {
     return [];
   }

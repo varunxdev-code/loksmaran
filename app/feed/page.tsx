@@ -6,6 +6,7 @@ import { FeedSkeleton } from "@/components/feed-skeleton";
 import { Go } from "@/components/go-link";
 import { PostCard } from "@/components/post-card";
 import { FEED_FILTERS, type FeedCategory } from "@/lib/content";
+import { useLocale, useT } from "@/lib/i18n";
 import { INDIA_STATES } from "@/lib/india";
 import { useLok } from "@/lib/store";
 import { useLiveFeed } from "@/lib/use-live-feed";
@@ -29,6 +30,8 @@ function FeedInner() {
   const upsertPost = useLok((s) => s.upsertPost);
   const unseen = useLok((s) => s.unseen);
   const clearUnseen = useLok((s) => s.clearUnseen);
+  const locale = useLocale((s) => s.locale);
+  const t = useT();
   const localPosts = useMemo(() => allPosts.filter((p) => p.id.startsWith("p-")), [allPosts]);
   const [sort, setSort] = useState<(typeof SORTS)[number]["id"]>("hot");
   const [category, setCategory] = useState<FeedCategory>("all");
@@ -80,6 +83,7 @@ function FeedInner() {
     place: place || undefined,
     lat: category === "nearby" ? coords?.lat : undefined,
     lng: category === "nearby" ? coords?.lng : undefined,
+    lang: locale,
   });
   const loadMore = live.loadMore;
 
@@ -118,11 +122,14 @@ function FeedInner() {
       <div>
         <div className="feed-hero">
           <div>
-            <p className="kicker">Live archive</p>
-            <h1 className="mt-2 font-display text-3xl font-light tracking-tight sm:text-4xl">Stories from the map</h1>
-            <p className="mt-2 max-w-xl text-sm text-mute">Real places, festivals, crafts and kitchens — pulled live from public archives, then yours when you share.</p>
+            <p className="kicker">{t("liveArchive")}</p>
+            <h1 className="mt-2 font-display text-3xl font-light tracking-tight sm:text-4xl">{t("storiesFromMap")}</h1>
+            <p className="mt-2 max-w-xl text-sm text-mute">{t("feedLead")}</p>
           </div>
-          <Go href="/create" className="btn btn-solid mt-4 h-11 min-h-11 w-full sm:mt-0 sm:w-auto">Share a story</Go>
+          <div className="flex flex-wrap gap-2">
+            <Go href="/map" className="btn btn-ghost !text-[#f6f1e8] !border-white/20 mt-4 h-11 min-h-11 w-full sm:mt-0 sm:w-auto">{t("map")}</Go>
+            <Go href="/create" className="btn btn-solid mt-4 h-11 min-h-11 w-full sm:mt-0 sm:w-auto">{t("share")}</Go>
+          </div>
         </div>
 
         <div className="mt-5 chip-row">

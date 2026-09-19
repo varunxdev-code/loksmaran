@@ -8,8 +8,9 @@ import { goTo } from "@/components/go-link";
 import { uploadAudio, uploadImage } from "@/lib/storage";
 import { useLok } from "@/lib/store";
 import { CATEGORIES, COMMUNITIES } from "@/lib/taxonomy";
-import { mockTranscribe, startLiveHindi } from "@/lib/transcribe";
-import type { CategoryId } from "@/lib/types";
+import { mockTranscribe, startLiveSpeech } from "@/lib/transcribe";
+import { useLocale, useT } from "@/lib/i18n";
+import type { CategoryId, Consent, Locale } from "@/lib/types";
 
 type Recog = { stop: () => void } | null;
 
@@ -17,6 +18,8 @@ export default function CreatePage() {
   const addPost = useLok((s) => s.addPost);
   const toast = useLok((s) => s.toast);
   const offline = useLok((s) => s.offline);
+  const t = useT();
+  const locale = useLocale((s) => s.locale);
 
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -28,6 +31,9 @@ export default function CreatePage() {
   const [error, setError] = useState("");
   const [fromVoice, setFromVoice] = useState(false);
   const [done, setDone] = useState(false);
+  const [consent, setConsent] = useState<Consent>("village");
+  const [speech, setSpeech] = useState<Locale>(locale);
+  const [holderName, setHolderName] = useState("");
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const live = useRef<Recog>(null);
   const media = useRef<MediaRecorder | null>(null);
@@ -67,12 +73,12 @@ export default function CreatePage() {
     } catch {
       /* mic optional */
     }
-    const rec = startLiveHindi((text) => {
+    const rec = startLiveSpeech((text) => {
       if (text) {
         setBody(text);
         setFromVoice(true);
       }
-    });
+    }, speech === "hi" ? "hi-IN" : "en-IN");
     live.current = rec;
     if (!rec && !media.current) {
       setBusy("tr");
@@ -125,6 +131,11 @@ export default function CreatePage() {
       category,
       communitySlug: place,
       fromVoice: fromVoice || Boolean(audio),
+      language: speech,
+      consent,
+      holderName: holderName.trim() || undefined,
+      titleHi: speech === "hi" ? title.trim() : undefined,
+      bodyHi: speech === "hi" ? body.trim() : undefined,
     });
     setDone(true);
     toast("Published to the live feed");
@@ -144,9 +155,9 @@ export default function CreatePage() {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
       <div>
-        <p className="kicker">Share</p>
-        <h1 className="mt-2 font-display text-3xl font-light tracking-tight sm:text-4xl">Tell a village story</h1>
-        <p className="mt-2 text-mute">Record your voice. Pin it to a real place. It lands on the live feed.</p>
+        <p className="kicker">{t("share")}</p>
+        <h1 className="mt-2 font-display text-3xl font-light tracking-tight sm:text-4xl">{t("tellStory")}</h1>
+        <p className="mt-2 text-mute">{t("tellLead")}</p>
 
         <div className="mt-6 space-y-5">
           <label className="block">
@@ -162,7 +173,7 @@ export default function CreatePage() {
                 <button type="button" className="btn btn-ink" onClick={stopVoice}>Stop recording</button>
               ) : (
                 <button type="button" className="btn btn-ink" onClick={() => void startVoice()}>
-                  <Mic size={16} /> Start speaking
+                  <Mic size={16} /> {speech === "hi" ? t("speakHi") : t("speakEn")}
                 </button>
               )}
             </div>
@@ -170,6 +181,26 @@ export default function CreatePage() {
             {busy === "rec" ? <p className="mt-2 text-sm text-mute">Listening…</p> : null}
             {audio ? <AudioPlayer src={audio} label="Your recording" /> : null}
           </div>
+
+          <div>
+            <p className="text-sm text-mute">{t("consent")}</p>
+            <div className="chip-row mt-2">
+              {(["public", "village", "family", "private"] as Consent[]).map((c) => (
+                <button key={c} type="button" onClick={() => setConsent(c)} className={`chip ${consent === c ? "chip-on" : ""}`}>
+                  {c === "village" ? t("villageOnly") : t(c)}
+                </button>
+              ))}
+            </div>
+            <div className="chip-row mt-2">
+              <button type="button" className={`chip ${speech === "hi" ? "chip-on" : ""}`} onClick={() => setSpeech("hi")}>{t("speakHi")}</button>
+              <button type="button" className={`chip ${speech === "en" ? "chip-on" : ""}`} onClick={() => setSpeech("en")}>{t("speakEn")}</button>
+            </div>
+          </div>
+
+          <label className="block">
+            <span className="text-sm text-mute">{t("holder")}</span>
+            <input className="field mt-2" value={holderName} onChange={(e) => setHolderName(e.target.value)} placeholder="Name of the knowledge holder" />
+          </label>
 
           <label className="block">
             <span className="text-sm text-mute">Story</span>
@@ -188,7 +219,7 @@ export default function CreatePage() {
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={c.image} alt="" />
-                  <span>{c.name}</span>
+                  <span>{locale === "hi" ? c.nameHi : c.name}</span>
                 </button>
               ))}
             </div>
@@ -199,7 +230,7 @@ export default function CreatePage() {
             <div className="chip-row mt-2">
               {CATEGORIES.map((c) => (
                 <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`chip ${category === c.id ? "chip-on" : ""}`}>
-                  {c.label}
+                  {locale === "hi" ? c.labelHi : c.label}
                 </button>
               ))}
             </div>
@@ -222,7 +253,7 @@ export default function CreatePage() {
 
           <div className="sticky bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-20 lg:static lg:bottom-auto">
             <button type="button" className="btn btn-ink w-full sm:w-auto sm:min-w-[240px]" onClick={() => void publish()} disabled={busy === "pub"}>
-              {busy === "pub" ? "Publishing…" : "Publish to the live feed"}
+              {busy === "pub" ? "Publishing…" : t("publish")}
             </button>
           </div>
         </div>

@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
       q: sp.get("q") || undefined,
       lat: lat ? Number(lat) : undefined,
       lng: lng ? Number(lng) : undefined,
+      lang: (sp.get("lang") === "hi" ? "hi" : "en") as "en" | "hi",
       page: Number(sp.get("page") || "1"),
     });
     return NextResponse.json(data);

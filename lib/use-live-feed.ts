@@ -15,6 +15,7 @@ export function useLiveFeed(opts: {
   q?: string;
   lat?: number;
   lng?: number;
+  lang?: "en" | "hi";
 }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [page, setPage] = useState(1);
@@ -36,6 +37,7 @@ export function useLiveFeed(opts: {
     if (opts.q) sp.set("q", opts.q);
     if (opts.lat != null) sp.set("lat", String(opts.lat));
     if (opts.lng != null) sp.set("lng", String(opts.lng));
+    if (opts.lang) sp.set("lang", opts.lang);
     return sp.toString();
   };
 
@@ -81,7 +83,7 @@ export function useLiveFeed(opts: {
         }
       }
     },
-    [opts.category, opts.state, opts.district, opts.place, opts.q, opts.lat, opts.lng],
+    [opts.category, opts.state, opts.district, opts.place, opts.q, opts.lat, opts.lng, opts.lang],
   );
 
   useEffect(() => {

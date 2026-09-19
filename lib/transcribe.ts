@@ -33,11 +33,11 @@ export function canLiveTranscribe() {
   return Boolean(speechEngine());
 }
 
-export function startLiveHindi(onText: (text: string, final: boolean) => void) {
+export function startLiveSpeech(onText: (text: string, final: boolean) => void, lang: "hi-IN" | "en-IN" = "hi-IN") {
   const Ctor = speechEngine();
   if (!Ctor) return null;
   const rec = new Ctor();
-  rec.lang = "hi-IN";
+  rec.lang = lang;
   rec.continuous = true;
   rec.interimResults = true;
   rec.onresult = (event) => {
@@ -53,6 +53,10 @@ export function startLiveHindi(onText: (text: string, final: boolean) => void) {
   };
   rec.start();
   return rec;
+}
+
+export function startLiveHindi(onText: (text: string, final: boolean) => void) {
+  return startLiveSpeech(onText, "hi-IN");
 }
 
 export async function mockTranscribe(category: string) {

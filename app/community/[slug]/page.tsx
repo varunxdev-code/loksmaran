@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
+import { Go } from "@/components/go-link";
 import { PostCard } from "@/components/post-card";
 import { useLok } from "@/lib/store";
 import { communityBySlug } from "@/lib/taxonomy";
@@ -73,9 +74,29 @@ export default function CommunityPage() {
       ) : null}
 
       {tab === "Place" ? (
-        <p className="card mt-6 p-8 leading-relaxed text-mute">
-          {community.name} is a {community.kind.toLowerCase()} in {community.state}. The map can wait. The voices are the point.
-        </p>
+        <div className="mt-6 overflow-hidden rounded-[24px] border border-line">
+          {community.coordinates ? (
+            <iframe
+              title={`${community.name} on OpenStreetMap`}
+              className="h-[360px] w-full border-0"
+              src={`https://www.openstreetmap.org/export/embed.html?bbox=${community.coordinates.lng - 0.08}%2C${community.coordinates.lat - 0.06}%2C${community.coordinates.lng + 0.08}%2C${community.coordinates.lat + 0.06}&layer=mapnik&marker=${community.coordinates.lat}%2C${community.coordinates.lng}`}
+            />
+          ) : null}
+          <div className="bg-white p-6">
+            <h2 className="font-display text-2xl font-light">{community.name} · {community.nameHi}</h2>
+            <p className="mt-2 leading-relaxed text-mute">
+              {community.name} is a {community.kind.toLowerCase()} in {community.state}. Stories on this page sit on this OpenStreetMap pin.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Go href={`/map?v=${community.slug}`} className="btn btn-ink h-10 min-h-10 px-4 text-sm">Open living map</Go>
+              {community.coordinates ? (
+                <a className="btn btn-ghost h-10 min-h-10 px-4 text-sm !text-ink !border-line" href={`https://www.openstreetmap.org/?mlat=${community.coordinates.lat}&mlon=${community.coordinates.lng}#map=14/${community.coordinates.lat}/${community.coordinates.lng}`} target="_blank" rel="noreferrer">
+                  OpenStreetMap
+                </a>
+              ) : null}
+            </div>
+          </div>
+        </div>
       ) : null}
     </div>
   );

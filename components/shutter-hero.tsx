@@ -60,11 +60,14 @@ export function ShutterHero() {
       </div>
 
       <div className="hero-cta">
-        <Go href="/feed" className="btn btn-solid min-w-0 lg:min-w-[200px]">
+        <Go href="/feed" className="btn btn-solid min-w-0 lg:min-w-[180px]">
           Open the live feed
         </Go>
-        <Go href="/create" className="btn btn-ghost min-w-0 lg:min-w-[200px]">
-          Record a village story
+        <Go href="/map" className="btn btn-ghost min-w-0 lg:min-w-[180px]">
+          Village map
+        </Go>
+        <Go href="/library" className="btn btn-ghost min-w-0 lg:min-w-[180px]">
+          Reading room
         </Go>
       </div>
 

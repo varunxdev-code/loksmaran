@@ -15,7 +15,9 @@ type Overpass = {
   }[];
 };
 
-type Nominatim = {
+type GeoJson = { type: string; coordinates?: unknown };
+
+type NominatimHit = {
   display_name?: string;
   lat?: string;
   lon?: string;
@@ -24,8 +26,22 @@ type Nominatim = {
   class?: string;
   osm_id?: number;
   osm_type?: string;
+  geojson?: GeoJson;
+  boundingbox?: string[];
   address?: { state?: string; county?: string; city?: string; town?: string; village?: string };
-}[];
+};
+
+type Nominatim = NominatimHit[];
+
+export type OsmNearPin = {
+  id: string;
+  title: string;
+  titleHi?: string;
+  kind: string;
+  lat: number;
+  lng: number;
+  osmUrl: string;
+};
 
 const OVERPASS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"];
 
@@ -128,16 +144,74 @@ export async function getOsmPlace(type: string, id: string): Promise<FeedItem | 
   }
 }
 
-export async function nominatimSearch(q: string, limit = 12) {
+export async function nominatimSearch(q: string, limit = 12, extra: Record<string, string> = {}) {
   const url = `https://nominatim.openstreetmap.org/search?${new URLSearchParams({
     q,
     format: "json",
     addressdetails: "1",
     limit: String(limit),
     countrycodes: "in",
+    ...extra,
   })}`;
   try {
-    return await cached(`nom:${q}`, 30 * 60_000, () => getJson<Nominatim>(url, undefined, 1800));
+    return await cached(`nom:${q}:${limit}:${JSON.stringify(extra)}`, 30 * 60_000, () => getJson<Nominatim>(url, undefined, 1800));
+  } catch {
+    return [];
+  }
+}
+
+export async function villageOsmShape(name: string, state: string, fallback: { lat: number; lng: number }) {
+  const hits = await nominatimSearch(`${name} ${state} India`, 1, { polygon_geojson: "1" });
+  const hit = hits[0];
+  const lat = hit?.lat ? Number(hit.lat) : fallback.lat;
+  const lng = hit?.lon ? Number(hit.lon) : fallback.lng;
+  const bbox = hit?.boundingbox?.map(Number);
+  return {
+    lat,
+    lng,
+    geojson: hit?.geojson && hit.geojson.type !== "Point" ? hit.geojson : null,
+    bbox: bbox && bbox.length === 4 ? bbox : undefined,
+    osmUrl: hit?.osm_id
+      ? `https://www.openstreetmap.org/${hit.osm_type || "node"}/${hit.osm_id}`
+      : `https://www.openstreetmap.org/#map=14/${lat}/${lng}`,
+  };
+}
+
+export async function nearbyVillageOsm(lat: number, lng: number): Promise<OsmNearPin[]> {
+  const query = `[out:json][timeout:18];(
+    nwr["historic"](around:12000,${lat},${lng});
+    nwr["heritage"](around:12000,${lat},${lng});
+    nwr["tourism"](around:12000,${lat},${lng});
+    nwr["craft"](around:12000,${lat},${lng});
+    nwr["amenity"~"place_of_worship|school|community_centre"](around:12000,${lat},${lng});
+    node["place"~"village|hamlet|suburb"](around:12000,${lat},${lng});
+  ); out center 40;`;
+  try {
+    const data = await overpass(query);
+    const seen = new Set<string>();
+    const pins: OsmNearPin[] = [];
+    for (const el of data.elements ?? []) {
+      const tags = el.tags || {};
+      const title = tags.name || tags["name:en"];
+      const plat = el.lat ?? el.center?.lat;
+      const plng = el.lon ?? el.center?.lon;
+      if (!title || plat == null || plng == null) continue;
+      const key = `${el.type}/${el.id}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const kind = tags.historic || tags.tourism || tags.craft || tags.amenity || tags.heritage || "place";
+      pins.push({
+        id: `osm:${key}`,
+        title,
+        titleHi: tags["name:hi"],
+        kind,
+        lat: plat,
+        lng: plng,
+        osmUrl: `https://www.openstreetmap.org/${el.type}/${el.id}`,
+      });
+      if (pins.length >= 28) break;
+    }
+    return pins;
   } catch {
     return [];
   }

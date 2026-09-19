@@ -2,13 +2,15 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Flame, Globe2, Plus, Search, UserRound } from "lucide-react";
+import { BookOpen, Flame, Globe2, MapPinned, Plus, Search, UserRound } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Go, goTo } from "@/components/go-link";
+import { LocaleToggle } from "@/components/locale-toggle";
 import { useAuth } from "@/lib/auth";
+import { useT } from "@/lib/i18n";
 import { useLok } from "@/lib/store";
 
-const APP = ["/feed", "/create", "/explore", "/community", "/profile", "/post"];
+const APP = ["/feed", "/create", "/explore", "/community", "/profile", "/post", "/library", "/map", "/dashboard"];
 const AUTH = ["/login", "/signup"];
 
 function isApp(path: string) {
@@ -62,17 +64,18 @@ function Toasts({ toasts, app }: { toasts: { id: string; text: string }[]; app: 
   );
 }
 
-const MARKET_LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/feed", label: "Feed" },
-  { href: "/community", label: "Villages" },
-  { href: "/explore", label: "Search" },
-  { href: "/pricing", label: "Pricing" },
-];
-
 function MarketingShell({ path, children }: { path: string; children: React.ReactNode }) {
   const session = useAuth((s) => s.session);
+  const t = useT();
   const [open, setOpen] = useState(false);
+  const links = [
+    { href: "/", label: t("home") },
+    { href: "/feed", label: t("liveFeed") },
+    { href: "/library", label: t("library") },
+    { href: "/map", label: t("map") },
+    { href: "/community", label: t("villages") },
+    { href: "/pricing", label: t("pricing") },
+  ];
   return (
     <div className="min-h-svh bg-night text-[#f6f1e8]">
       <header className="sticky top-0 z-50 bg-night/95 px-3 pt-[max(8px,env(safe-area-inset-top))] backdrop-blur sm:px-4 md:px-6">
@@ -81,15 +84,16 @@ function MarketingShell({ path, children }: { path: string; children: React.Reac
             <Logo size="sm" light />
           </Go>
           <nav className="nav-pill hidden lg:flex">
-            {MARKET_LINKS.map((l) => (
+            {links.map((l) => (
               <Go key={l.href} href={l.href} className={path === l.href ? "is-on" : ""}>
                 {l.label}
               </Go>
             ))}
           </nav>
           <div className="flex shrink-0 items-center gap-2">
+            <LocaleToggle light />
             <Go href={session ? "/feed" : "/signup"} className="btn btn-ghost h-10 min-h-10 px-3 text-[11px] tracking-[0.12em] uppercase sm:h-11 sm:min-h-11 sm:px-5">
-              {session ? "Feed" : "Start"}
+              {session ? t("feed") : t("start")}
             </Go>
             <button type="button" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/20 text-lg lg:hidden" onClick={() => setOpen((v) => !v)} aria-label="Menu">
               {open ? "×" : "☰"}
@@ -98,7 +102,7 @@ function MarketingShell({ path, children }: { path: string; children: React.Reac
         </div>
         {open ? (
           <div className="grid gap-1 pb-4 lg:hidden">
-            {MARKET_LINKS.map((l) => (
+            {links.map((l) => (
               <Go key={l.href} href={l.href} className={`rounded-full px-4 py-3 text-sm ${path === l.href ? "bg-white/10 text-[#f6f1e8]" : "text-white/80"}`}>
                 {l.label}
               </Go>
@@ -113,6 +117,7 @@ function MarketingShell({ path, children }: { path: string; children: React.Reac
 }
 
 function SiteFooter() {
+  const t = useT();
   return (
     <footer className="mt-12 border-t border-white/10 px-4 py-10 sm:px-6 md:mt-16 md:py-12">
       <div className="mx-auto grid max-w-6xl gap-8 sm:grid-cols-2 md:grid-cols-4 md:gap-10">
@@ -125,9 +130,11 @@ function SiteFooter() {
         <div>
           <p className="text-[11px] uppercase tracking-[0.18em] text-white/35">Product</p>
           <div className="mt-3 grid gap-2 text-sm text-white/70">
-            <Go href="/feed">Live feed</Go>
-            <Go href="/create">Share a story</Go>
-            <Go href="/pricing">Pricing</Go>
+            <Go href="/feed">{t("liveFeed")}</Go>
+            <Go href="/library">{t("library")}</Go>
+            <Go href="/map">{t("map")}</Go>
+            <Go href="/create">{t("share")}</Go>
+            <Go href="/pricing">{t("pricing")}</Go>
           </div>
         </div>
         <div>
@@ -152,26 +159,27 @@ function SiteFooter() {
   );
 }
 
-const SIDE = [
-  { href: "/feed", label: "Live feed", icon: Flame },
-  { href: "/explore", label: "Explore", icon: Search },
-  { href: "/community", label: "Villages", icon: Globe2 },
-  { href: "/create", label: "New story", icon: Plus },
-  { href: "/profile", label: "Profile", icon: UserRound },
-] as const;
-
-const BOTTOM = [
-  { href: "/feed", label: "Feed", icon: Flame },
-  { href: "/explore", label: "Search", icon: Search },
-  { href: "/create", label: "Post", icon: Plus },
-  { href: "/community", label: "Villages", icon: Globe2 },
-  { href: "/profile", label: "You", icon: UserRound },
-];
-
 function AppShell({ path, children }: { path: string; children: React.ReactNode }) {
   const session = useAuth((s) => s.session);
   const logout = useAuth((s) => s.logout);
   const unseen = useLok((s) => s.unseen);
+  const t = useT();
+  const side = [
+    { href: "/feed", label: t("liveFeed"), icon: Flame },
+    { href: "/library", label: t("library"), icon: BookOpen },
+    { href: "/map", label: t("map"), icon: MapPinned },
+    { href: "/community", label: t("villages"), icon: Globe2 },
+    { href: "/create", label: t("newStory"), icon: Plus },
+    { href: "/dashboard", label: t("dashboard"), icon: UserRound },
+    { href: "/profile", label: t("profile"), icon: UserRound },
+  ];
+  const bottom = [
+    { href: "/feed", label: t("feed"), icon: Flame },
+    { href: "/library", label: t("library"), icon: BookOpen },
+    { href: "/create", label: t("post"), icon: Plus },
+    { href: "/map", label: t("map"), icon: MapPinned },
+    { href: "/profile", label: t("you"), icon: UserRound },
+  ];
 
   return (
     <div className="app-canvas min-h-svh text-ink">
@@ -188,14 +196,14 @@ function AppShell({ path, children }: { path: string; children: React.ReactNode 
               goTo(`/explore?q=${encodeURIComponent(String(q || ""))}`);
             }}
           >
-            <input name="q" className="field h-11 rounded-full bg-white shadow-sm" placeholder="Search a village, craft, festival…" />
+            <input name="q" className="field h-11 rounded-full bg-white shadow-sm" placeholder={t("searchPh")} />
           </form>
+          <LocaleToggle />
           <Go href="/explore" className="grid h-10 w-10 place-items-center rounded-full border border-line bg-white text-ink md:hidden" aria-label="Search">
             <Search size={16} />
           </Go>
           <Go href="/create" className="btn btn-ink h-10 min-h-10 shrink-0 px-3 text-sm sm:px-4 lg:h-11 lg:min-h-11 lg:px-6">
-            <span className="sm:hidden">Share</span>
-            <span className="hidden sm:inline">Share a story</span>
+            {t("share")}
           </Go>
         </div>
       </header>
@@ -203,7 +211,7 @@ function AppShell({ path, children }: { path: string; children: React.ReactNode 
       <div className="mx-auto grid max-w-6xl gap-6 px-3 py-4 sm:px-4 sm:py-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8 lg:px-4 lg:py-8">
         <aside className="hidden lg:block">
           <nav className="sticky top-24 grid gap-1 text-sm">
-            {SIDE.map((item) => {
+            {side.map((item) => {
               const Icon = item.icon;
               const on = path === item.href || path.startsWith(`${item.href}/`);
               return (
@@ -227,11 +235,11 @@ function AppShell({ path, children }: { path: string; children: React.ReactNode 
                   goTo("/");
                 }}
               >
-                Log out
+                {session ? t("logout") : t("login")}
               </button>
             ) : (
               <Go href="/login" className="mt-6 rounded-full px-4 py-2.5 text-mute hover:text-ink">
-                Log in
+                {t("login")}
               </Go>
             )}
           </nav>
@@ -251,7 +259,7 @@ function AppShell({ path, children }: { path: string; children: React.ReactNode 
 
       <nav className="bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-line bg-[#f4efe6]/95 backdrop-blur lg:hidden">
         <div className="grid grid-cols-5 text-[10px] sm:text-[11px]">
-          {BOTTOM.map((item) => {
+          {bottom.map((item) => {
             const Icon = item.icon;
             const on = path === item.href || path.startsWith(`${item.href}/`);
             return (

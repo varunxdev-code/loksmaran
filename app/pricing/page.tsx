@@ -1,31 +1,56 @@
+"use client";
+
+import { goTo } from "@/components/go-link";
+import { useAuth } from "@/lib/auth";
+import type { PlanId } from "@/lib/types";
+
 export default function PricingPage() {
+  const session = useAuth((s) => s.session);
+  const login = useAuth((s) => s.login);
+  const setPlan = useAuth((s) => s.setPlan);
   const plans = [
     {
+      id: "village" as PlanId,
       name: "Village",
       price: "Free",
       note: "Residents & students",
       points: ["Record with consent", "Village + family privacy", "Search the archive", "School missions"],
       cta: "Start free",
-      href: "/signup",
     },
     {
+      id: "visitor" as PlanId,
       name: "Visitor",
       price: "₹199",
       note: "Once, per village",
-      points: ["Public audio and clips", "Craft & festival trails", "Offline pack", "Supports holders"],
+      points: ["Public audio and clips", "Craft & festival trails", "Map trails", "Supports holders"],
       cta: "Get a visitor pass",
-      href: "/signup",
       featured: true,
     },
     {
+      id: "institution" as PlanId,
       name: "Institution",
       price: "₹12,000",
       note: "School / board / year",
-      points: ["Moderator seats", "Branded place page", "Export", "Board dashboard"],
-      cta: "Talk to us",
-      href: "/signup",
+      points: ["Moderator seats", "Branded place page", "Export", "Archive desk"],
+      cta: "Open institution desk",
     },
   ];
+
+  function choose(plan: PlanId) {
+    if (session) {
+      setPlan(plan);
+      goTo("/dashboard");
+      return;
+    }
+    login({
+      provider: "email",
+      name: "Archive guest",
+      email: "guest@loksmaran.in",
+      plan,
+      role: plan === "institution" ? "moderator" : plan === "visitor" ? "visitor" : "recorder",
+    });
+    goTo("/dashboard");
+  }
 
   return (
     <main className="mx-auto max-w-6xl px-1 py-10 sm:px-2 sm:py-16 md:px-4">
@@ -45,9 +70,9 @@ export default function PricingPage() {
                 <li key={x}>{x}</li>
               ))}
             </ul>
-            <a href={p.href} className={`mt-8 w-full ${p.featured ? "btn btn-solid" : "btn btn-ghost"}`}>
+            <button type="button" onClick={() => choose(p.id)} className={`mt-8 w-full ${p.featured ? "btn btn-solid" : "btn btn-ghost"}`}>
               {p.cta}
-            </a>
+            </button>
           </article>
         ))}
       </div>

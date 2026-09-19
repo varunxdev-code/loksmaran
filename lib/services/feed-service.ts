@@ -3,7 +3,9 @@ import { INDIA_STATES } from "../india";
 import { archiveAudio } from "./archive";
 import { cached } from "./http";
 import { unpackId } from "./ids";
+import { openLibraryHeritage, archiveTexts } from "./libraries";
 import { getOsmPlace, nominatimSearch, searchOsm } from "./osm";
+import { unescoIndiaItems } from "./unesco";
 import { getWikidataEntity, listDistricts, listPlaces, searchWikidata } from "./wikidata";
 import { commonsImageFor, searchCommons } from "./wikimedia";
 import { enrichWithWikipedia, wikipediaByTitles, wikipediaItems, wikipediaSummary } from "./wikipedia";
@@ -17,6 +19,7 @@ export type FeedQuery = {
   lat?: number;
   lng?: number;
   page?: number;
+  lang?: "en" | "hi";
 };
 
 const PAGE = 12;
@@ -120,10 +123,11 @@ async function assemble(opts: FeedQuery): Promise<FeedItem[]> {
   const geo = category === "nearby" || category === "villages" || category === "cities" || category === "places";
   const curated = opts.q || opts.place ? [] : (CURATED[category] || CURATED.all).slice(0, 8);
 
+  const lang = opts.lang || "en";
   const settled = await Promise.allSettled([
-    curated.length ? wikipediaByTitles(curated, category, opts.state) : Promise.resolve([] as FeedItem[]),
+    curated.length ? wikipediaByTitles(curated, category, opts.state, lang) : Promise.resolve([] as FeedItem[]),
     searchCommons(q, category, opts.state),
-    wikipediaItems(wikiQ, category, opts.state),
+    wikipediaItems(wikiQ, category, opts.state, lang),
     searchWikidata({
       category,
       state: opts.state,
@@ -142,6 +146,8 @@ async function assemble(opts: FeedQuery): Promise<FeedItem[]> {
           lng: opts.lng,
         })
       : Promise.resolve([] as FeedItem[]),
+    category === "heritage" || category === "all" || category === "history" ? unescoIndiaItems() : Promise.resolve([] as FeedItem[]),
+    category === "stories" || category === "all" ? openLibraryHeritage() : Promise.resolve([] as FeedItem[]),
   ]);
 
   const raw: FeedItem[] = [];
@@ -179,8 +185,8 @@ export async function getFeedItem(id: string): Promise<FeedItem | null> {
     else if (source === "osm") {
       const [type, osmId] = raw.split(":");
       item = type && osmId ? await getOsmPlace(type, osmId) : null;
-    } else if (source === "wiki") {
-      const page = await wikipediaSummary(raw);
+    } else if (source === "wiki" || source === "wikihi") {
+      const page = await wikipediaSummary(raw, source === "wikihi" ? "hi" : "en");
       if (page?.title) {
         item = {
           id,
@@ -195,9 +201,18 @@ export async function getFeedItem(id: string): Promise<FeedItem | null> {
           author: "Wikipedia contributors",
         };
       }
+    } else if (source === "unesco") {
+      const list = await unescoIndiaItems();
+      item = list.find((x) => x.id === id) || list[0] || null;
+    } else if (source === "ol") {
+      const list = await openLibraryHeritage();
+      item = list.find((x) => x.id === id) || list[0] || null;
     } else if (source === "commons") {
       const hits = await searchCommons(raw.replace(/^File:/i, ""), "heritage");
       item = hits[0] || null;
+    } else if (source === "ia") {
+      const list = await archiveTexts();
+      item = list.find((x) => x.id === id) || list[0] || null;
     }
     if (!item) {
       const feed = await assemble({ q: raw.replace(/_/g, " "), category: "all" });

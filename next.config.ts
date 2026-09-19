@@ -1,6 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "upload.wikimedia.org" },
+      { protocol: "https", hostname: "commons.wikimedia.org" },
+      { protocol: "https", hostname: "**.wikipedia.org" },
+      { protocol: "https", hostname: "covers.openlibrary.org" },
+      { protocol: "https", hostname: "archive.org" },
+      { protocol: "https", hostname: "**.archive.org" },
+      { protocol: "https", hostname: "**.basemaps.cartocdn.com" },
+      { protocol: "https", hostname: "tile.openstreetmap.org" },
+    ],
+  },
   async redirects() {
     return [
       { source: "/village", destination: "/feed", permanent: false },
@@ -8,7 +20,7 @@ const nextConfig: NextConfig = {
       { source: "/visit", destination: "/community", permanent: false },
       { source: "/visit/:slug", destination: "/community/:slug", permanent: false },
       { source: "/item/:id", destination: "/post/:id", permanent: false },
-      { source: "/moderate", destination: "/feed", permanent: false },
+      { source: "/moderate", destination: "/dashboard", permanent: false },
       { source: "/community/varanasi", destination: "/community/kamalabari", permanent: false },
       { source: "/community/jaipur", destination: "/community/chandelao", permanent: false },
       { source: "/community/kochi", destination: "/community/kumbalangi", permanent: false },

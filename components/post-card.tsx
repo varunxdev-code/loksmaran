@@ -3,6 +3,7 @@
 import { Bookmark, MessageCircle, Share2 } from "lucide-react";
 import { AudioPlayer } from "@/components/audio-player";
 import { Go } from "@/components/go-link";
+import { displayBody, displayTitle, useLocale } from "@/lib/i18n";
 import { categoryLabel, communityBySlug } from "@/lib/taxonomy";
 import { formatCount, timeAgo } from "@/lib/format";
 import { useLok } from "@/lib/store";
@@ -14,6 +15,7 @@ export function PostCard({ post }: { post: Post }) {
   const toggleLike = useLok((s) => s.toggleLike);
   const toggleSave = useLok((s) => s.toggleSave);
   const toast = useLok((s) => s.toast);
+  const locale = useLocale((s) => s.locale);
   const place = communityBySlug(post.communitySlug);
   const comments = post.comments ?? [];
   const author = post.author?.name || post.source || "Archive";
@@ -41,7 +43,7 @@ export function PostCard({ post }: { post: Post }) {
           <img src={post.imageUrl} alt="" className="aspect-[16/10] w-full object-cover sm:aspect-[16/9]" />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-4">
             <p className="text-[11px] uppercase tracking-[0.16em] text-white/80">
-              {place?.name || post.communitySlug.replace(/-/g, " ")}
+            {place ? (locale === "hi" ? place.nameHi : place.name) : post.communitySlug.replace(/-/g, " ")}
               {place?.state || post.author?.location ? ` · ${place?.state || post.author.location}` : ""}
             </p>
           </div>
@@ -51,7 +53,7 @@ export function PostCard({ post }: { post: Post }) {
       <div className="p-4 sm:p-5">
         <p className="truncate text-[12px] text-mute">
           <Go href={`/community/${post.communitySlug}`} className="font-medium text-ink">
-            r/{place?.name ?? post.communitySlug}
+            r/{place ? (locale === "hi" ? place.nameHi : place.name) : post.communitySlug}
           </Go>
           <span> · {author} · {timeAgo(post.createdAt)}</span>
           {post.fromVoice ? " · voice" : ""}
@@ -59,10 +61,10 @@ export function PostCard({ post }: { post: Post }) {
 
         <Go href={href} className="mt-2 block">
           <h2 className="font-display text-[22px] font-normal leading-snug tracking-[-0.03em] sm:text-[26px]">
-            {post.title}
+            {displayTitle(post, locale)}
           </h2>
         </Go>
-        {post.body ? <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-mute">{post.body}</p> : null}
+        {post.body ? <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-mute">{displayBody(post, locale)}</p> : null}
         {post.audioUrl ? <AudioPlayer src={post.audioUrl} label="Village voice note" /> : null}
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -85,7 +87,8 @@ export function PostCard({ post }: { post: Post }) {
             <Bookmark size={14} className={saved ? "fill-ink text-ink" : ""} />
             <span className="hidden sm:inline">{saved ? "Saved" : "Save"}</span>
           </button>
-          <span className="chip py-1">{categoryLabel(post.category)}</span>
+          <span className="chip py-1">{categoryLabel(post.category, locale)}</span>
+          {post.consent ? <span className="chip py-1">{post.consent}</span> : null}
         </div>
 
         {post.source ? (
